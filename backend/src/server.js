@@ -79,7 +79,7 @@ app.use((error, req, res, next) => {
   return res.status(500).json({ error: "An unexpected server error occurred." });
 });
 
-const server = app.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
   console.log(
     `[Firebase Admin] Project ID configured: ${Boolean(process.env.FIREBASE_PROJECT_ID?.trim())}; credential source: ${
@@ -88,8 +88,4 @@ const server = app.listen(PORT, () => {
         : "Application Default Credentials"
     }; Firestore connectivity not checked at startup (run "npm run diagnose:firebase").`,
   );
-});
-
-server.on("error", (error) => {
-  console.error(`[Server listen error]`, error);
 });

@@ -83,7 +83,11 @@ export default function LoginPage() {
                 <span className="loading-spinner" aria-hidden="true" />
                 Signing in with Google…
               </span>
-            ) : "Continue with Google"}
+            ) : !firebaseConfigured ? (
+              "Firebase configuration required"
+            ) : (
+              "Continue with Google"
+            )}
           </button>
           <p className="mt-6 text-center text-sm text-charcoal/70 dark:text-brand-ivory/70">
             Administrator?{" "}

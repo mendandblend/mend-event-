@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/AuthContext.jsx";
 import { bookingApi } from "../booking/api.js";
+import {
+  firebaseConfigured,
+  missingFirebaseEnvVars,
+  REQUIRED_FIREBASE_ENV_VARS,
+} from "../firebase.js";
 import ThemeToggle from "../components/ui/ThemeToggle.jsx";
 
 export default function AdminLoginPage() {
@@ -49,7 +54,7 @@ export default function AdminLoginPage() {
   }
 
   async function handleSignIn() {
-    if (submittingRef.current) return;
+    if (!firebaseConfigured || submittingRef.current) return;
     submittingRef.current = true;
     setError("");
     setSubmitting(true);
@@ -89,6 +94,67 @@ export default function AdminLoginPage() {
             Continue with the Google account that has been granted administrator access. The server
             verifies the account’s trusted Firebase claim before opening the dashboard.
           </p>
+
+          {!firebaseConfigured && (
+            <div
+              className="mt-6 rounded-2xl border border-amber-500/50 bg-amber-500/10 p-5 text-sm text-amber-950 dark:border-amber-400/40 dark:bg-amber-400/10 dark:text-amber-200"
+              role="alert"
+            >
+              <div className="flex items-start gap-3">
+                <svg
+                  className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <div className="space-y-3">
+                  <div>
+                    <h2 className="font-semibold text-amber-900 dark:text-amber-100">
+                      Firebase client configuration is missing
+                    </h2>
+                    <p className="mt-1 leading-relaxed">
+                      Google sign-in is disabled until the frontend build-time environment variables are configured.
+                    </p>
+                  </div>
+                  <div>
+                    <p className="font-medium text-amber-900 dark:text-amber-100">
+                      Required build-time variables ({missingFirebaseEnvVars.length} missing):
+                    </p>
+                    <ul className="mt-1.5 list-inside list-disc space-y-1 font-mono text-xs">
+                      {REQUIRED_FIREBASE_ENV_VARS.map((key) => {
+                        const isMissing = missingFirebaseEnvVars.includes(key);
+                        return (
+                          <li
+                            key={key}
+                            className={
+                              isMissing
+                                ? "font-bold text-amber-950 dark:text-amber-200"
+                                : "opacity-60 line-through"
+                            }
+                          >
+                            {key} {isMissing ? "(missing)" : "(configured)"}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                  <div className="rounded-xl border border-amber-600/20 bg-white/60 p-3 text-xs leading-relaxed text-amber-900 dark:border-white/10 dark:bg-black/20 dark:text-amber-200">
+                    <p className="font-semibold">Important:</p>
+                    <p className="mt-0.5">
+                      Do not put the Firebase service-account JSON in the frontend. Configure these public client variables in your frontend host settings (e.g., Hostinger’s build environment) or <code>frontend/.env</code>, then rebuild the application.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {error && (
             <p className="mt-6 rounded-2xl border border-terracotta/50 bg-terracotta/10 p-4 text-sm text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F0A592]" role="alert">
               {error}
@@ -97,7 +163,7 @@ export default function AdminLoginPage() {
           <button
             type="button"
             onClick={handleSignIn}
-            disabled={submitting}
+            disabled={!firebaseConfigured || submitting}
             className="btn-interactive mt-8 w-full rounded-full bg-brand-blue px-6 py-3 font-medium text-white shadow-sm hover:bg-brand-blue-dark hover:shadow-[0_10px_22px_-8px_rgba(64,95,128,0.42)] dark:bg-[#496D92] dark:hover:bg-[#3B5B7D] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? (
@@ -105,7 +171,11 @@ export default function AdminLoginPage() {
                 <span className="loading-spinner" aria-hidden="true" />
                 Verifying account…
               </span>
-            ) : "Continue with Google"}
+            ) : !firebaseConfigured ? (
+              "Firebase configuration required"
+            ) : (
+              "Continue with Google"
+            )}
           </button>
         </section>
       </main>

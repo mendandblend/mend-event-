@@ -1,8 +1,10 @@
-const apiBase = import.meta.env.VITE_API_URL || "";
+const rawApiUrl = (import.meta.env.VITE_API_URL || "").trim().replace(/\/+$/, "");
+const apiBase = rawApiUrl.endsWith("/api") ? rawApiUrl.slice(0, -4) : rawApiUrl;
 
 export async function bookingApi(path, user, options = {}) {
   const token = user ? await user.getIdToken() : null;
-  const response = await fetch(`${apiBase}/api${path}`, {
+  const normalizedPath = path.startsWith("/") ? path : `/${path}`;
+  const response = await fetch(`${apiBase}/api${normalizedPath}`, {
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),

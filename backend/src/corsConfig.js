@@ -1,4 +1,8 @@
-const productionFrontendOrigin = "https://mend-and-blend.vercel.app";
+const defaultAllowedOrigins = [
+  "https://mendandblend.com",
+  "https://www.mendandblend.com",
+  "https://mend-and-blend.vercel.app",
+];
 
 export function createCorsOptions(env = process.env) {
   const configuredOrigins = (env.FRONTEND_URL || "")
@@ -6,9 +10,10 @@ export function createCorsOptions(env = process.env) {
     .map((origin) => origin.trim())
     .filter(Boolean);
   const allowedOrigins = new Set([
+    ...defaultAllowedOrigins,
     ...configuredOrigins,
-    productionFrontendOrigin,
   ]);
+
 
   if (env.NODE_ENV !== "production") {
     allowedOrigins.add("http://localhost:5173");

@@ -527,7 +527,14 @@ export async function verifyCheckoutPayment(uid, {
   });
 }
 
-async function applyFailedPayment({ orderId, paymentId, description, eventId, eventType }) {
+async function applyFailedPayment({
+  orderId,
+  paymentId,
+  description,
+  eventId,
+  eventType,
+  releaseReservation = false,
+}) {
   const db = getDatabase();
   const now = Timestamp.now();
   const paymentRef = db.collection("payments").doc(orderId);
@@ -561,28 +568,72 @@ async function applyFailedPayment({ orderId, paymentId, description, eventId, ev
     const limitRef = db.collection("bookingLimits").doc(booking.limitId);
     const limitSnapshot = await transaction.get(limitRef);
 
-    if (eventRef) {
-      transaction.create(eventRef, {
-        eventId,
-        type: eventType,
-        orderId,
-        paymentId,
-        status: "processed",
-        receivedAt: now,
-      });
-    }
     if (payment.status === "captured" || payment.status === "refund_required") {
+      if (eventRef) {
+        transaction.create(eventRef, {
+          eventId,
+          type: eventType,
+          orderId,
+          paymentId,
+          status: "ignored_terminal_payment",
+          receivedAt: now,
+        });
+      }
       return {
         duplicate: true,
         paymentStatus: payment.status,
         bookingStatus: booking.status,
       };
     }
+    if (releaseReservation && payment.status === "authorized") {
+      if (eventRef) {
+        transaction.create(eventRef, {
+          eventId,
+          type: eventType,
+          orderId,
+          paymentId,
+          status: "ignored_authorized_payment",
+          receivedAt: now,
+        });
+      }
+      return {
+        duplicate: false,
+        paymentStatus: "authorized",
+        bookingStatus: booking.status,
+      };
+    }
+
+    if (eventRef) {
+      transaction.create(eventRef, {
+        eventId,
+        type: eventType,
+        orderId,
+        paymentId,
+        status: releaseReservation ? "processed" : "failed_attempt_recorded",
+        receivedAt: now,
+      });
+    }
+
+    if (!releaseReservation) {
+      transaction.update(paymentRef, {
+        lastFailedPaymentId: paymentId || null,
+        lastFailureDescription: description || null,
+        lastFailedAt: now,
+        updatedAt: now,
+      });
+      return {
+        duplicate: false,
+        paymentStatus: payment.status,
+        bookingStatus: booking.status,
+        failureRecorded: true,
+      };
+    }
 
     transaction.update(paymentRef, {
       status: "failed",
-      razorpayPaymentId: paymentId,
+      razorpayPaymentId: paymentId || payment.razorpayPaymentId || null,
       failureDescription: description || null,
+      failedAt: now,
       updatedAt: now,
     });
     if (
@@ -718,15 +769,23 @@ export async function cancelPaymentCheckout(uid, bookingId) {
   if (payments.some((item) => item.status === "authorized")) {
     return { status: "pending" };
   }
-  if (payments.some((item) => item.status === "failed")) {
+  if (payments.some((item) => item.status === "created")) {
+    return { status: "pending" };
+  }
+  const failedPayments = payments.filter((item) => item.status === "failed");
+  if (failedPayments.length > 0 && failedPayments.length === payments.length) {
     const failedResult = await applyFailedPayment({
       orderId: booking.razorpayOrderId,
-      paymentId: payments.find((item) => item.status === "failed")?.id,
+      paymentId: failedPayments.at(-1)?.id,
       description: "Payment failed or checkout was abandoned.",
-      eventId: `cancel-${booking.razorpayOrderId}`,
-      eventType: "checkout.cancelled",
+      releaseReservation: true,
     });
-    return { status: failedResult.bookingStatus || failedResult.paymentStatus };
+    return {
+      status:
+        failedResult.paymentStatus === "authorized"
+          ? "pending"
+          : failedResult.bookingStatus || failedResult.paymentStatus,
+    };
   }
   return releaseUnpaidReservation(uid, bookingId, "cancelled");
 }

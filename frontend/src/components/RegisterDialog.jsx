@@ -219,20 +219,17 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
         },
       });
       checkout.on("payment.failed", async (failure) => {
-        setRemainingSeconds(0);
+        const failureMessage = failure.error?.description?.trim();
+        const retryMessage = "If your seat hold is still active, you can retry in Razorpay.";
         setPaymentMessage(
-          failure.error?.description ||
-            "Payment failed. Your seat will be released after Razorpay confirms the failure.",
+          failureMessage
+            ? `${failureMessage} ${retryMessage}`
+            : `That payment attempt did not go through. ${retryMessage}`,
         );
         try {
-          await bookingApi(
-            `/payments/${encodeURIComponent(reservation.bookingId)}/cancel`,
-            user,
-            { method: "POST", body: JSON.stringify({}) },
-          );
           await onReserved();
-        } catch (cancelError) {
-          setError(cancelError.message || "Could not update the failed payment status.");
+        } catch (refreshError) {
+          setError(refreshError.message || "Could not refresh your reservation status.");
         }
       });
       closeDialogForCheckout();

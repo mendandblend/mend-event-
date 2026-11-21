@@ -217,19 +217,17 @@ export default function MyReservationsPage() {
         handler: (result) => handlePaymentResult(reservation, result),
       });
       checkout.on("payment.failed", async (failure) => {
+        const failureMessage = failure.error?.description?.trim();
+        const retryMessage = "If your seat hold is still active, you can retry in Razorpay.";
         setNotice(
-          failure.error?.description ||
-            "Payment failed. Your reservation will be released after the failure is confirmed.",
+          failureMessage
+            ? `${failureMessage} ${retryMessage}`
+            : `That payment attempt did not go through. ${retryMessage}`,
         );
         try {
-          await bookingApi(
-            `/payments/${encodeURIComponent(reservation.id)}/cancel`,
-            user,
-            { method: "POST", body: JSON.stringify({}) },
-          );
           await loadReservations();
-        } catch (cancelError) {
-          setError(cancelError.message || "Could not update the failed payment status.");
+        } catch (refreshError) {
+          setError(refreshError.message || "Could not refresh your reservation status.");
         }
       });
       checkout.open();

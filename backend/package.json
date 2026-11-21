@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=20.19"
+    "node": ">=22"
   },
   "main": "src/server.js",
   "scripts": {
@@ -15,6 +15,7 @@
     "admin:grant": "node scripts/set-admin-claim.js"
   },
   "dependencies": {
+    "@google-cloud/firestore": "^9.1.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^5.1.0",

@@ -1,5 +1,25 @@
 import Button from "./ui/Button.jsx";
 import { formatINR } from "../data/siteData.js";
+import rootsToReachPoster from "../assets/posters/roots-to-reach.jpg";
+import mapOfTheMindPoster from "../assets/posters/map-of-the-mind.jpg";
+import anchorSessionsPoster from "../assets/posters/anchor-sessions.jpg";
+
+const DEFAULT_POSTERS = {
+  "roots-to-reach": rootsToReachPoster,
+  "map-of-the-mind": mapOfTheMindPoster,
+  "map-of-the-minds": mapOfTheMindPoster,
+  "anchor-sessions": anchorSessionsPoster,
+  "the-anchor-sessions": anchorSessionsPoster,
+};
+
+function getWorkshopPoster(workshop) {
+  if (workshop.imageUrl) return workshop.imageUrl;
+  const slug = (workshop.title || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "");
+  return DEFAULT_POSTERS[slug] || DEFAULT_POSTERS[workshop.id?.split("-").slice(0, 3).join("-")] || null;
+}
 
 const statusStyles = {
   open: "border-sage/60 bg-sage/30 text-sage-dark dark:border-sage/40 dark:bg-sage/20 dark:text-[#C8D8C1]",
@@ -13,6 +33,7 @@ const statusStyles = {
 
 export default function WorkshopCard({ workshop, dateLabel, onRegister }) {
   const { title, start, end, price, description, availableSeats } = workshop;
+  const poster = getWorkshopPoster(workshop);
   const registrationStatus = workshop.registrationStatus || "open";
   const registrationLabel = {
     open: "Registration open",
@@ -35,14 +56,14 @@ export default function WorkshopCard({ workshop, dateLabel, onRegister }) {
           <path d="M2 14 C14 -2 24 -2 34 12 S56 26 78 8" />
         </svg>
       </div>
-      {workshop.imageUrl && (
-        <div className="image-frame mt-5 rounded-2xl border border-charcoal/10 dark:border-white/10">
+      {poster && (
+        <div className="image-frame mt-5 overflow-hidden rounded-2xl border border-charcoal/10 bg-brand-blue/5 shadow-xs dark:border-white/10 dark:bg-white/5">
           <img
-            src={workshop.imageUrl}
-            alt=""
+            src={poster}
+            alt={`${title} event poster`}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="image-frame__img aspect-[16/9] w-full object-cover"
+            className="image-frame__img aspect-[4/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
           />
         </div>
       )}

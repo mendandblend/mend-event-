@@ -25,8 +25,27 @@ export const NAV_LINKS = [
 ];
 
 export const FOUNDERS = [
-  { name: "R Dhamyanthi", initials: "RD", tone: "bg-brand-blue text-white ring-4 ring-gold/30 dark:bg-[#5B81A8] dark:ring-gold/25" },
-  { name: "S Catherine Mercy", initials: "SC", tone: "bg-terracotta-dark text-white ring-4 ring-sage/40 dark:bg-terracotta dark:text-[#1B2226] dark:ring-sage/30" },
+  {
+    name: "R Dhamayanthi",
+    initials: "RD",
+    role: "Co-founder",
+    qualifications: [
+      "BSc Psychology",
+      "Master of Social Work (MSW)",
+    ],
+    tone: "bg-brand-blue text-white ring-4 ring-gold/30 dark:bg-[#5B81A8] dark:ring-gold/25",
+  },
+  {
+    name: "S Catherine Mercy",
+    initials: "SC",
+    role: "Co-founder",
+    qualifications: [
+      "BSc Psychology",
+      "MSW specialised in Medical & Psychiatry",
+      "MSc Counselling Psychology",
+    ],
+    tone: "bg-terracotta-dark text-white ring-4 ring-sage/40 dark:bg-terracotta dark:text-[#1B2226] dark:ring-sage/30",
+  },
 ];
 export const FOUNDER_BIO_PLACEHOLDER = "Bio and photo to be added.";
 

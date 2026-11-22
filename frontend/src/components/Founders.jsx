@@ -22,14 +22,20 @@ export default function Founders() {
                   {f.initials}
                 </div>
               </div>
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-sage-dark dark:text-sage">
                   <span className="h-px w-4 bg-terracotta/75" aria-hidden="true" />
                   Co-founder
                 </p>
                 <h3 className="mt-1.5 break-words text-2xl font-medium text-brand-blue dark:text-[#96B7DA] sm:text-3xl">{f.name}</h3>
-                {/* TEMPORARY: replace with the founder's real bio and photo */}
-                <p className="mt-3 italic leading-relaxed text-charcoal/70 dark:text-brand-ivory/65">{FOUNDER_BIO_PLACEHOLDER}</p>
+                <ul className="mt-3.5 space-y-1.5 text-sm text-charcoal/80 dark:text-brand-ivory/80">
+                  {f.qualifications.map((qual) => (
+                    <li key={qual} className="flex items-start gap-2">
+                      <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-gold" aria-hidden="true" />
+                      <span className="leading-snug">{qual}</span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             </article>
           </Reveal>

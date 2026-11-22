@@ -86,7 +86,9 @@ export async function getPublishedWorkshops() {
     }),
   );
   workshops.sort((a, b) =>
-    a.date.localeCompare(b.date) || (a.number || "").localeCompare(b.number || ""),
+    a.date.localeCompare(b.date) ||
+    (a.start || "").localeCompare(b.start || "") ||
+    a.title.localeCompare(b.title),
   );
 
   const dates = new Map();

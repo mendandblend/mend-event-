@@ -299,7 +299,11 @@ export async function listManagedEvents() {
         revenue: capturedRevenueByEvent.get(event.id) || 0,
       };
     })
-    .sort((a, b) => a.date.localeCompare(b.date) || a.title.localeCompare(b.title));
+    .sort((a, b) =>
+      a.date.localeCompare(b.date) ||
+      (a.start || "").localeCompare(b.start || "") ||
+      a.title.localeCompare(b.title),
+    );
 }
 
 function safeEventId(title) {

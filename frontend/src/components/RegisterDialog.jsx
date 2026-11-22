@@ -22,6 +22,24 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
     paymentMessage,
   );
 
+  const initialSeatsRef = useRef(workshop?.availableSeats ?? 0);
+  useEffect(() => {
+    if (workshop?.id) {
+      initialSeatsRef.current = workshop.availableSeats ?? 0;
+    }
+  }, [workshop?.id]);
+
+  const hasHeldOrConfirmedSeat = Boolean(reservation || paymentConfirmed);
+  const baseSeats = typeof workshop?.availableSeats === "number" ? workshop.availableSeats : 0;
+  const displayedSeats = Math.max(
+    0,
+    hasHeldOrConfirmedSeat
+      ? (baseSeats < initialSeatsRef.current
+          ? baseSeats
+          : baseSeats - 1)
+      : baseSeats,
+  );
+
   function closeDialogForCheckout() {
     checkoutDialogCloseRef.current = true;
     if (ref.current?.open) ref.current.close();
@@ -317,7 +335,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
             <div className="flex items-center gap-2">
               <span className="text-sm text-charcoal/70 dark:text-brand-ivory/70">Available seats</span>
               <strong className="rounded-full border border-sage/50 bg-sage/20 px-2.5 py-0.5 text-sm font-semibold text-sage-dark dark:border-sage/35 dark:bg-sage/15 dark:text-sage">
-                {workshop.availableSeats}
+                {displayedSeats}
               </strong>
             </div>
           </div>
@@ -479,7 +497,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                 </p>
               )}
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button type="submit" variant="accent" disabled={submitting || workshop.availableSeats === 0}>
+                <Button type="submit" variant="accent" disabled={submitting || displayedSeats === 0}>
                   {submitting ? "Reserving…" : "Reserve seat"}
                 </Button>
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>

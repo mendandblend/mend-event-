@@ -15,9 +15,13 @@ export default function Workshops() {
   const [error, setError] = useState("");
   const { user, loading: authLoading } = useAuth();
   const requestInFlight = useRef(false);
+  const nextRequestNeeded = useRef(false);
 
   const loadWorkshops = useCallback(async ({ quiet = false } = {}) => {
-    if (requestInFlight.current) return;
+    if (requestInFlight.current) {
+      nextRequestNeeded.current = true;
+      return;
+    }
     requestInFlight.current = true;
     if (!quiet) setLoading(true);
     setError("");
@@ -25,11 +29,20 @@ export default function Workshops() {
       const result = await bookingApi("/events");
       setWorkshops(result.workshops);
       setDates(result.dates);
+      setSelected((prev) => {
+        if (!prev) return null;
+        const fresh = result.workshops?.find((w) => w.id === prev.id);
+        return fresh || prev;
+      });
     } catch (loadError) {
       setError(loadError.message || "Could not load events.");
     } finally {
       requestInFlight.current = false;
       if (!quiet) setLoading(false);
+      if (nextRequestNeeded.current) {
+        nextRequestNeeded.current = false;
+        void loadWorkshops({ quiet: true });
+      }
     }
   }, []);
 
@@ -153,8 +166,11 @@ export default function Workshops() {
       <RegisterDialog
         workshop={selected}
         user={user}
-        onClose={() => setSelected(null)}
-        onReserved={loadWorkshops}
+        onClose={() => {
+          setSelected(null);
+          void loadWorkshops({ quiet: true });
+        }}
+        onReserved={() => loadWorkshops({ quiet: true })}
       />
     </Section>
   );

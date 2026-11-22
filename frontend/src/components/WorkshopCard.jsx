@@ -1,6 +1,6 @@
 import Button from "./ui/Button.jsx";
 import { formatINR } from "../data/siteData.js";
-import rootsToReachPoster from "../assets/posters/roots-to-reach.jpg";
+import rootsToReachPoster from "../assets/posters/roots-to-reach-v2.jpg";
 import mapOfTheMindPoster from "../assets/posters/map-of-the-mind.jpg";
 import anchorSessionsPoster from "../assets/posters/anchor-sessions.jpg";
 

@@ -70,97 +70,119 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-gold/25 bg-brand-blue text-white shadow-sm transition-colors duration-200 dark:border-gold/20 dark:bg-[#2A4058]">
-      <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+      <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center justify-between gap-3 sm:gap-4 px-4 sm:px-6 py-3">
         <Link
           to="/"
           onClick={handleLogoClick}
-          className="group flex items-center gap-3 cursor-pointer select-none"
+          className="shrink-0 group flex items-center gap-2.5 sm:gap-3 cursor-pointer select-none"
           aria-label="Mend and Blend - Go to start page"
         >
           <img
             src={logo}
             alt="Mend and Blend logo"
-            className="h-11 w-11 rounded-xl object-cover ring-1 ring-white/25 transition-transform group-hover:scale-105 cursor-pointer"
+            className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl object-cover ring-1 ring-white/25 transition-transform group-hover:scale-105 cursor-pointer"
           />
-          <span className="font-serif text-2xl font-medium tracking-wide text-white whitespace-nowrap cursor-pointer group-hover:text-gold transition-colors">
+          <span className="font-serif text-xl sm:text-2xl font-medium tracking-wide text-white whitespace-nowrap cursor-pointer group-hover:text-gold transition-colors">
             Mend and Blend
           </span>
         </Link>
 
-        <ul className="hidden items-center gap-7 md:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <a
-                href={sectionHref(link.href)}
-                aria-current={location.pathname === "/" && location.hash === link.href ? "location" : undefined}
-                className={`nav-link text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname === "/" && location.hash === link.href ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                {link.label}
-              </a>
-            </li>
-          ))}
-          {isAdmin && (
-            <li>
-              <Link
-                to="/admin"
-                aria-current={location.pathname.startsWith("/admin") ? "page" : undefined}
-                className={`nav-link text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname.startsWith("/admin") ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                Admin Dashboard
-              </Link>
-            </li>
-          )}
-        </ul>
-        <Button
-          href={sectionHref("#workshops")}
-          variant="accent"
-          className="!hidden border border-white/15 bg-terracotta text-[#181E22] font-semibold shadow-sm hover:bg-[#CC725B] hover:text-[#181E22] dark:bg-terracotta dark:text-[#181E22] dark:hover:bg-[#CC725B] md:!inline-flex"
-        >
-          Register
-        </Button>
-        <div className="hidden items-center gap-4 md:flex">
+        {location.pathname.startsWith("/admin") ? (
+          <div className="hidden items-center gap-3 lg:flex">
+            <Link
+              to="/"
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3.5 py-1.5 text-xs font-medium text-brand-ivory hover:bg-white/20 hover:text-white transition-colors"
+            >
+              ← Public Site
+            </Link>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1 text-xs font-semibold text-gold">
+              <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden="true" />
+              Admin Dashboard
+            </span>
+          </div>
+        ) : (
+          <ul className="hidden items-center gap-3 lg:gap-5 xl:gap-7 lg:flex">
+            {NAV_LINKS.map((link) => (
+              <li key={link.href}>
+                <a
+                  href={sectionHref(link.href)}
+                  aria-current={location.pathname === "/" && location.hash === link.href ? "location" : undefined}
+                  className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
+                    location.pathname === "/" && location.hash === link.href ? "nav-link-active font-semibold" : ""
+                  }`}
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))}
+            {isAdmin && (
+              <li>
+                <Link
+                  to="/admin"
+                  aria-current={location.pathname.startsWith("/admin") ? "page" : undefined}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1 text-xs font-semibold text-gold hover:bg-gold/25 transition-colors"
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden="true" />
+                  Admin
+                </Link>
+              </li>
+            )}
+          </ul>
+        )}
+
+        {!location.pathname.startsWith("/admin") && (
+          <Button
+            href={sectionHref("#workshops")}
+            variant="accent"
+            className="!hidden border border-white/15 bg-terracotta text-[#181E22] font-semibold shadow-sm hover:bg-[#CC725B] hover:text-[#181E22] dark:bg-terracotta dark:text-[#181E22] dark:hover:bg-[#CC725B] xl:!inline-flex"
+          >
+            Register
+          </Button>
+        )}
+
+        <div className="hidden items-center gap-2 xl:gap-4 lg:flex">
           {user ? (
             <>
-              <Link
-                to="/my-reservations"
-                aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
-                className={`nav-link text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                My Reservations
-              </Link>
-              <Link
-                to="/my-tickets"
-                aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
-                className={`nav-link text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                My tickets
-              </Link>
+              {!location.pathname.startsWith("/admin") && (
+                <>
+                  <Link
+                    to="/my-reservations"
+                    aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
+                    className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
+                      location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
+                    }`}
+                  >
+                    <span className="hidden xl:inline">My </span>Reservations
+                  </Link>
+                  <Link
+                    to="/my-tickets"
+                    aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
+                    className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
+                      location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
+                    }`}
+                  >
+                    <span className="hidden xl:inline">My </span>Tickets
+                  </Link>
+                </>
+              )}
               <button
                 type="button"
                 onClick={handleSignOut}
                 disabled={signingOut}
-                className="text-sm font-medium text-brand-ivory/90 hover:text-gold hover:underline disabled:opacity-60"
+                className="text-xs xl:text-sm font-medium text-brand-ivory/90 hover:text-gold hover:underline disabled:opacity-60 whitespace-nowrap"
               >
                 {signingOut ? "Signing out…" : "Sign out"}
               </button>
             </>
           ) : (
-            <Link to="/login" className="nav-link text-sm font-medium text-brand-ivory/95 hover:text-white">
+            <Link to="/login" className="nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white whitespace-nowrap">
               Sign in
             </Link>
           )}
           <ThemeToggle variant="navbar" />
         </div>
 
-        <div className="flex items-center gap-2 md:hidden">
+        <div className="flex items-center gap-2 lg:hidden">
           <ThemeToggle variant="navbar" compact />
           <button
             type="button"
@@ -178,37 +200,56 @@ export default function Navbar() {
       </nav>
 
       {open && (
-        <div id="mobile-menu" className="mobile-menu-enter border-t border-white/15 bg-brand-blue-dark/40 px-6 pb-6 dark:bg-[#1E2E3F]/80 md:hidden">
-          <ul className="flex flex-col gap-1 py-3">
-            {NAV_LINKS.map((link) => (
-              <li key={link.href}>
-                <a
-                  href={sectionHref(link.href)}
-                  onClick={close}
-                  aria-current={location.pathname === "/" && location.hash === link.href ? "location" : undefined}
-                  className={`nav-link block py-3 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                    location.pathname === "/" && location.hash === link.href ? "nav-link-active font-semibold" : ""
-                  }`}
-                >
-                  {link.label}
-                </a>
-              </li>
-            ))}
-            {isAdmin && (
+        <div id="mobile-menu" className="mobile-menu-enter border-t border-white/15 bg-brand-blue-dark/40 px-6 pb-6 dark:bg-[#1E2E3F]/80 lg:hidden">
+          {location.pathname.startsWith("/admin") ? (
+            <ul className="flex flex-col gap-1 py-3">
               <li>
                 <Link
-                  to="/admin"
+                  to="/"
                   onClick={close}
-                  aria-current={location.pathname.startsWith("/admin") ? "page" : undefined}
-                  className={`nav-link block py-3 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                    location.pathname.startsWith("/admin") ? "nav-link-active font-semibold" : ""
-                  }`}
+                  className="nav-link block py-3 text-lg font-medium text-brand-ivory/95 hover:text-white"
                 >
-                  Admin Dashboard
+                  ← Back to Public Site
                 </Link>
               </li>
-            )}
-          </ul>
+              <li>
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1 text-xs font-semibold text-gold">
+                  <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden="true" />
+                  Admin Dashboard Active
+                </span>
+              </li>
+            </ul>
+          ) : (
+            <ul className="flex flex-col gap-1 py-3">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={sectionHref(link.href)}
+                    onClick={close}
+                    aria-current={location.pathname === "/" && location.hash === link.href ? "location" : undefined}
+                    className={`nav-link block py-3 text-lg font-medium text-brand-ivory/95 hover:text-white ${
+                      location.pathname === "/" && location.hash === link.href ? "nav-link-active font-semibold" : ""
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+              {isAdmin && (
+                <li>
+                  <Link
+                    to="/admin"
+                    onClick={close}
+                    aria-current={location.pathname.startsWith("/admin") ? "page" : undefined}
+                    className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-gold/15 px-4 py-2 text-sm font-semibold text-gold"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-gold" aria-hidden="true" />
+                    Admin Dashboard
+                  </Link>
+                </li>
+              )}
+            </ul>
+          )}
           {user ? (
             <div className="mb-4 flex flex-col gap-3 border-t border-white/15 pt-4">
               <Link

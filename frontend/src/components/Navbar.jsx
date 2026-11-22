@@ -131,38 +131,35 @@ export default function Navbar() {
         <div className="hidden items-center gap-3 xl:gap-4 lg:flex">
           {user ? (
             <>
-              {isAdmin ? (
-                !location.pathname.startsWith("/admin") && (
-                  <Link
-                    to="/admin"
-                    className="inline-flex items-center gap-2 rounded-full border border-gold/45 bg-gold/15 px-3.5 py-1.5 text-xs xl:text-sm font-semibold text-gold shadow-xs hover:bg-gold/25 transition-all"
-                  >
-                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse" aria-hidden="true" />
-                    Admin Dashboard
-                  </Link>
-                )
-              ) : (
-                <>
-                  <Link
-                    to="/my-reservations"
-                    aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
-                    className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                      location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
-                    }`}
-                  >
-                    My Reservations
-                  </Link>
-                  <Link
-                    to="/my-tickets"
-                    aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
-                    className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
-                      location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
-                    }`}
-                  >
-                    My tickets
-                  </Link>
-                </>
+              {isAdmin && !location.pathname.startsWith("/admin") && (
+                <Link
+                  to="/admin"
+                  className="inline-flex items-center gap-2 rounded-full border border-gold/45 bg-gold/15 px-3.5 py-1.5 text-xs xl:text-sm font-semibold text-gold shadow-xs hover:bg-gold/25 transition-all"
+                >
+                  <span className="h-2 w-2 rounded-full bg-gold animate-pulse" aria-hidden="true" />
+                  Admin Dashboard
+                </Link>
               )}
+              {!isAdmin && (
+                <Link
+                  to="/my-reservations"
+                  aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
+                  className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
+                    location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
+                  }`}
+                >
+                  My Reservations
+                </Link>
+              )}
+              <Link
+                to="/my-tickets"
+                aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
+                className={`nav-link text-xs xl:text-sm font-medium text-brand-ivory/95 hover:text-white ${
+                  location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
+                }`}
+              >
+                My tickets
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -251,29 +248,27 @@ export default function Navbar() {
           {user ? (
             <div className="mb-4 flex flex-col gap-3 border-t border-white/15 pt-4">
               {!isAdmin && (
-                <>
-                  <Link
-                    to="/my-reservations"
-                    onClick={close}
-                    aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
-                    className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                      location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
-                    }`}
-                  >
-                    My Reservations
-                  </Link>
-                  <Link
-                    to="/my-tickets"
-                    onClick={close}
-                    aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
-                    className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                      location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
-                    }`}
-                  >
-                    My tickets
-                  </Link>
-                </>
+                <Link
+                  to="/my-reservations"
+                  onClick={close}
+                  aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
+                  className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
+                    location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
+                  }`}
+                >
+                  My Reservations
+                </Link>
               )}
+              <Link
+                to="/my-tickets"
+                onClick={close}
+                aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
+                className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
+                  location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
+                }`}
+              >
+                My tickets
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}

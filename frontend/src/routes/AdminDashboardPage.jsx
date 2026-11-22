@@ -175,6 +175,15 @@ export default function AdminDashboardPage() {
                 administrators cannot change payment status.
               </p>
             </div>
+            <div className="mt-7 flex items-center gap-3">
+              <Link
+                to="/my-tickets"
+                className="inline-flex items-center gap-2 rounded-full border border-sage/60 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-brand-blue shadow-xs hover:bg-brand-ivory hover:text-brand-blue-dark dark:border-white/15 dark:bg-[#21292E] dark:text-[#96B7DA] dark:hover:bg-[#2A343A] transition-colors"
+              >
+                <span>🎟️</span>
+                <span>My personal tickets →</span>
+              </Link>
+            </div>
           </header>
 
           {error && (

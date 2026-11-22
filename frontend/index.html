@@ -22,6 +22,18 @@
   <script>
     (function () {
       try {
+        if ("scrollRestoration" in history) {
+          history.scrollRestoration = "manual";
+        }
+        window.scrollTo(0, 0);
+        if (window.location.hash) {
+          window.history.replaceState(null, "", window.location.pathname);
+        }
+      } catch (e) { }
+      window.addEventListener("beforeunload", function () {
+        window.scrollTo(0, 0);
+      });
+      try {
         var stored = localStorage.getItem("mend-and-blend-theme");
         var prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
         var theme = stored === "dark" || stored === "light" ? stored : (prefersDark ? "dark" : "light");

@@ -1,4 +1,4 @@
-import { StrictMode } from "react";
+import { StrictMode, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext.jsx";
@@ -17,6 +17,15 @@ import AdminDashboardPage from "./routes/AdminDashboardPage.jsx";
 
 function AnimatedRoutes() {
   const location = useLocation();
+
+  useEffect(() => {
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    if (!location.hash) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    }
+  }, [location.pathname]);
 
   return (
     <div key={`${location.pathname}${location.search}`} className="route-transition">

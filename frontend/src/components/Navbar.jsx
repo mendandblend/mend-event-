@@ -20,14 +20,13 @@ export default function Navbar() {
   const sectionHref = (href) => location.pathname === "/" ? href : `/${href}`;
 
   const handleLogoClick = (e) => {
+    e.preventDefault();
     close();
-    if (location.pathname === "/") {
-      e.preventDefault();
-      if (window.location.hash || window.location.search) {
-        window.history.replaceState(null, "", "/");
-      }
-      window.scrollTo(0, 0);
+    if (window.location.pathname === "/" && !window.location.hash && !window.location.search) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       window.location.reload();
+    } else {
+      window.location.href = "/";
     }
   };
 
@@ -72,9 +71,20 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-gold/25 bg-brand-blue text-white shadow-sm transition-colors duration-200 dark:border-gold/20 dark:bg-[#2A4058]">
       <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-        <Link to="/" onClick={handleLogoClick} className="flex items-center gap-3">
-          <img src={logo} alt="" className="h-11 w-11 rounded-xl object-cover ring-1 ring-white/25" />
-          <span className="font-serif text-2xl font-medium tracking-wide text-white">Mend and Blend</span>
+        <Link
+          to="/"
+          onClick={handleLogoClick}
+          className="group flex items-center gap-3 cursor-pointer select-none"
+          aria-label="Mend and Blend - Go to start page"
+        >
+          <img
+            src={logo}
+            alt="Mend and Blend logo"
+            className="h-11 w-11 rounded-xl object-cover ring-1 ring-white/25 transition-transform group-hover:scale-105 cursor-pointer"
+          />
+          <span className="font-serif text-2xl font-medium tracking-wide text-white whitespace-nowrap cursor-pointer group-hover:text-gold transition-colors">
+            Mend and Blend
+          </span>
         </Link>
 
         <ul className="hidden items-center gap-7 md:flex">

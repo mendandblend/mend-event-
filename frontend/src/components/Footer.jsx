@@ -5,13 +5,12 @@ import { POLICY_NAME, POLICY_PATH } from "../data/policyData.js";
 
 export default function Footer() {
   const handleLogoClick = (e) => {
-    if (window.location.pathname === "/") {
-      e.preventDefault();
-      if (window.location.hash || window.location.search) {
-        window.history.replaceState(null, "", "/");
-      }
-      window.scrollTo(0, 0);
+    e.preventDefault();
+    if (window.location.pathname === "/" && !window.location.hash && !window.location.search) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
       window.location.reload();
+    } else {
+      window.location.href = "/";
     }
   };
 
@@ -19,9 +18,20 @@ export default function Footer() {
     <footer className="bg-footer-atmosphere relative overflow-hidden border-t-2 border-gold/40 bg-brand-blue px-6 py-14 text-white transition-colors duration-200 dark:border-gold/30 dark:bg-[#213347]">
       <div className="relative z-10 mx-auto grid max-w-6xl gap-10 md:grid-cols-3">
         <div>
-          <Link to="/" onClick={handleLogoClick} className="flex items-center gap-3 transition-opacity hover:opacity-90">
-            <img src={logo} alt="" className="h-12 w-12 rounded-xl object-cover ring-1 ring-white/25" />
-            <span className="font-serif text-2xl font-medium tracking-wide text-white">Mend and Blend</span>
+          <Link
+            to="/"
+            onClick={handleLogoClick}
+            className="group inline-flex items-center gap-3 transition-opacity hover:opacity-95 cursor-pointer select-none"
+            aria-label="Mend and Blend - Go to start page"
+          >
+            <img
+              src={logo}
+              alt="Mend and Blend logo"
+              className="h-12 w-12 rounded-xl object-cover ring-1 ring-white/25 transition-transform group-hover:scale-105 cursor-pointer"
+            />
+            <span className="font-serif text-2xl font-medium tracking-wide text-white whitespace-nowrap cursor-pointer group-hover:text-gold transition-colors">
+              Mend and Blend
+            </span>
           </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-brand-ivory/85">
             Psychology-inspired workshops for self-discovery, emotional wellness and human connection.

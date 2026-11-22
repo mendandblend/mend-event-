@@ -101,7 +101,7 @@ export default function Navbar() {
             </span>
           </div>
         ) : (
-          <ul className="hidden items-center gap-3 lg:gap-5 xl:gap-7 lg:flex">
+          <ul className="hidden items-center gap-4 lg:gap-6 xl:gap-8 lg:flex">
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <a
@@ -115,22 +115,10 @@ export default function Navbar() {
                 </a>
               </li>
             ))}
-            {isAdmin && (
-              <li>
-                <Link
-                  to="/admin"
-                  aria-current={location.pathname.startsWith("/admin") ? "page" : undefined}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-gold/40 bg-gold/15 px-3 py-1 text-xs font-semibold text-gold hover:bg-gold/25 transition-colors"
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-gold" aria-hidden="true" />
-                  Admin
-                </Link>
-              </li>
-            )}
           </ul>
         )}
 
-        {!location.pathname.startsWith("/admin") && (
+        {!location.pathname.startsWith("/admin") && !isAdmin && (
           <Button
             href={sectionHref("#workshops")}
             variant="accent"
@@ -140,10 +128,20 @@ export default function Navbar() {
           </Button>
         )}
 
-        <div className="hidden items-center gap-2 xl:gap-4 lg:flex">
+        <div className="hidden items-center gap-3 xl:gap-4 lg:flex">
           {user ? (
             <>
-              {!location.pathname.startsWith("/admin") && (
+              {isAdmin ? (
+                !location.pathname.startsWith("/admin") && (
+                  <Link
+                    to="/admin"
+                    className="inline-flex items-center gap-2 rounded-full border border-gold/45 bg-gold/15 px-3.5 py-1.5 text-xs xl:text-sm font-semibold text-gold shadow-xs hover:bg-gold/25 transition-all"
+                  >
+                    <span className="h-2 w-2 rounded-full bg-gold animate-pulse" aria-hidden="true" />
+                    Admin Dashboard
+                  </Link>
+                )
+              ) : (
                 <>
                   <Link
                     to="/my-reservations"
@@ -152,7 +150,7 @@ export default function Navbar() {
                       location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
                     }`}
                   >
-                    <span className="hidden xl:inline">My </span>Reservations
+                    My Reservations
                   </Link>
                   <Link
                     to="/my-tickets"
@@ -161,7 +159,7 @@ export default function Navbar() {
                       location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
                     }`}
                   >
-                    <span className="hidden xl:inline">My </span>Tickets
+                    My tickets
                   </Link>
                 </>
               )}
@@ -252,26 +250,30 @@ export default function Navbar() {
           )}
           {user ? (
             <div className="mb-4 flex flex-col gap-3 border-t border-white/15 pt-4">
-              <Link
-                to="/my-reservations"
-                onClick={close}
-                aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
-                className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                My Reservations
-              </Link>
-              <Link
-                to="/my-tickets"
-                onClick={close}
-                aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
-                className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
-                  location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
-                }`}
-              >
-                My tickets
-              </Link>
+              {!isAdmin && (
+                <>
+                  <Link
+                    to="/my-reservations"
+                    onClick={close}
+                    aria-current={location.pathname === "/my-reservations" ? "page" : undefined}
+                    className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
+                      location.pathname === "/my-reservations" ? "nav-link-active font-semibold" : ""
+                    }`}
+                  >
+                    My Reservations
+                  </Link>
+                  <Link
+                    to="/my-tickets"
+                    onClick={close}
+                    aria-current={location.pathname === "/my-tickets" ? "page" : undefined}
+                    className={`nav-link py-2 text-lg font-medium text-brand-ivory/95 hover:text-white ${
+                      location.pathname === "/my-tickets" ? "nav-link-active font-semibold" : ""
+                    }`}
+                  >
+                    My tickets
+                  </Link>
+                </>
+              )}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -286,14 +288,16 @@ export default function Navbar() {
               Sign in
             </Link>
           )}
-          <Button
-            href={sectionHref("#workshops")}
-            onClick={close}
-            variant="accent"
-            className="w-full border border-white/15 bg-terracotta text-[#181E22] font-semibold hover:bg-[#CC725B] hover:text-[#181E22] dark:bg-terracotta dark:text-[#181E22] dark:hover:bg-[#CC725B]"
-          >
-            Register for a workshop
-          </Button>
+          {!isAdmin && (
+            <Button
+              href={sectionHref("#workshops")}
+              onClick={close}
+              variant="accent"
+              className="w-full border border-white/15 bg-terracotta text-[#181E22] font-semibold hover:bg-[#CC725B] hover:text-[#181E22] dark:bg-terracotta dark:text-[#181E22] dark:hover:bg-[#CC725B]"
+            >
+              Register for a workshop
+            </Button>
+          )}
         </div>
       )}
       {authError && (

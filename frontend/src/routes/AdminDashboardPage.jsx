@@ -34,9 +34,11 @@ function exportRegistrations(registrations) {
     "Session date",
     "Start time",
     "End time",
-    "Booking status",
+    "Registration status",
+    "Check-in status",
+    "Scanned at",
     "Payment status",
-    "Ticket status",
+    "Booking status",
     "Created at",
     "Booking ID",
   ];
@@ -48,9 +50,11 @@ function exportRegistrations(registrations) {
     registration.sessionDate,
     registration.start,
     registration.end,
-    registration.bookingStatus,
+    registration.isRegistered || registration.bookingStatus === "confirmed" ? "Registered" : "Not registered",
+    registration.isScanned || registration.ticketStatus === "redeemed" ? "Already scanned" : registration.ticketStatus === "valid" ? "Valid (Not scanned)" : "No ticket",
+    registration.scannedAt || "",
     registration.paymentStatus,
-    registration.ticketStatus,
+    registration.bookingStatus,
     registration.createdAt,
     registration.bookingId,
   ]);
@@ -94,6 +98,8 @@ export default function AdminDashboardPage() {
     eventId: "all",
     date: "all",
     paymentStatus: "all",
+    registeredState: "all",
+    scanState: "all",
   });
   const [selectedRegistration, setSelectedRegistration] = useState(null);
 
@@ -119,11 +125,29 @@ export default function AdminDashboardPage() {
   }, [loadDashboard]);
 
   const displayedRegistrations = useMemo(
-    () => dashboard.registrations.filter((registration) =>
-      (registrationFilters.eventId === "all" || registration.workshopId === registrationFilters.eventId) &&
-      (registrationFilters.date === "all" || registration.sessionDate === registrationFilters.date) &&
-      (registrationFilters.paymentStatus === "all" || registration.paymentStatus === registrationFilters.paymentStatus),
-    ),
+    () =>
+      dashboard.registrations.filter((registration) => {
+        const isRegistered = Boolean(
+          registration.isRegistered || registration.bookingStatus === "confirmed",
+        );
+        const isScanned = Boolean(
+          registration.isScanned || registration.ticketStatus === "redeemed",
+        );
+        return (
+          (registrationFilters.eventId === "all" ||
+            registration.workshopId === registrationFilters.eventId) &&
+          (registrationFilters.date === "all" ||
+            registration.sessionDate === registrationFilters.date) &&
+          (registrationFilters.paymentStatus === "all" ||
+            registration.paymentStatus === registrationFilters.paymentStatus) &&
+          (registrationFilters.registeredState === "all" ||
+            (registrationFilters.registeredState === "registered" && isRegistered) ||
+            (registrationFilters.registeredState === "not_registered" && !isRegistered)) &&
+          (registrationFilters.scanState === "all" ||
+            (registrationFilters.scanState === "scanned" && isScanned) ||
+            (registrationFilters.scanState === "not_scanned" && !isScanned))
+        );
+      }),
     [dashboard.registrations, registrationFilters],
   );
   const dashboardSections = [
@@ -145,13 +169,14 @@ export default function AdminDashboardPage() {
         body: JSON.stringify({ qrToken }),
       });
       setScanResult(result);
+      void loadDashboard();
     } catch (scanError) {
       setScanResult({
         status: "invalid",
         message: scanError.message || "Could not validate this ticket.",
       });
     }
-  }, [user]);
+  }, [user, loadDashboard]);
 
   async function redeemManualTicket(event) {
     event.preventDefault();
@@ -284,7 +309,7 @@ export default function AdminDashboardPage() {
                 className="w-full rounded-2xl border border-charcoal/20 bg-white px-4 py-3 text-sm text-charcoal dark:border-white/15 dark:bg-[#192024] dark:text-[#E8ECEF]"
               />
             </label>
-            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <label className="text-sm font-medium text-charcoal dark:text-[#D9DFE3]">Event
                 <select value={registrationFilters.eventId} onChange={(event) => setRegistrationFilters((current) => ({ ...current, eventId: event.target.value }))} className="mt-1 w-full rounded-xl border border-charcoal/20 bg-white px-3 py-2 font-normal text-charcoal dark:border-white/15 dark:bg-[#192024] dark:text-[#E8ECEF]">
                   <option value="all">All events</option>
@@ -297,6 +322,20 @@ export default function AdminDashboardPage() {
                   {[...new Set(dashboard.registrations.map((item) => item.sessionDate).filter(Boolean))].sort().map((date) => <option key={date} value={date}>{formatWorkshopDate(date)}</option>)}
                 </select>
               </label>
+              <label className="text-sm font-medium text-charcoal dark:text-[#D9DFE3]">Registration
+                <select value={registrationFilters.registeredState} onChange={(event) => setRegistrationFilters((current) => ({ ...current, registeredState: event.target.value }))} className="mt-1 w-full rounded-xl border border-charcoal/20 bg-white px-3 py-2 font-normal text-charcoal dark:border-white/15 dark:bg-[#192024] dark:text-[#E8ECEF]">
+                  <option value="all">All registrations</option>
+                  <option value="registered">Registered</option>
+                  <option value="not_registered">Not registered</option>
+                </select>
+              </label>
+              <label className="text-sm font-medium text-charcoal dark:text-[#D9DFE3]">Check-in / Scan
+                <select value={registrationFilters.scanState} onChange={(event) => setRegistrationFilters((current) => ({ ...current, scanState: event.target.value }))} className="mt-1 w-full rounded-xl border border-charcoal/20 bg-white px-3 py-2 font-normal text-charcoal dark:border-white/15 dark:bg-[#192024] dark:text-[#E8ECEF]">
+                  <option value="all">All check-in states</option>
+                  <option value="scanned">Already scanned</option>
+                  <option value="not_scanned">Not scanned yet</option>
+                </select>
+              </label>
               <label className="text-sm font-medium text-charcoal dark:text-[#D9DFE3]">Payment status
                 <select value={registrationFilters.paymentStatus} onChange={(event) => setRegistrationFilters((current) => ({ ...current, paymentStatus: event.target.value }))} className="mt-1 w-full rounded-xl border border-charcoal/20 bg-white px-3 py-2 font-normal text-charcoal dark:border-white/15 dark:bg-[#192024] dark:text-[#E8ECEF]">
                   <option value="all">All payment states</option>
@@ -305,30 +344,47 @@ export default function AdminDashboardPage() {
               </label>
             </div>
             <ul className="mt-5 grid gap-3 lg:hidden">
-              {displayedRegistrations.map((registration) => (
-                <li key={registration.bookingId} className="min-w-0 rounded-2xl border border-sage/40 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-[#21292E]">
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="break-words font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
-                      <p className="mt-1 break-all text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.email || "—"}</p>
-                      <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.phone || "—"}</p>
+              {displayedRegistrations.map((registration) => {
+                const isRegistered = Boolean(registration.isRegistered || registration.bookingStatus === "confirmed");
+                const isScanned = Boolean(registration.isScanned || registration.ticketStatus === "redeemed");
+                return (
+                  <li key={registration.bookingId} className="min-w-0 rounded-2xl border border-sage/40 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-[#21292E]">
+                    <div className="flex min-w-0 items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="break-words font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
+                        <p className="mt-1 break-all text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.email || "—"}</p>
+                        <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.phone || "—"}</p>
+                      </div>
+                      <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${isRegistered ? "border border-sage/60 bg-sage/25 text-sage-dark dark:border-sage/45 dark:bg-sage/20 dark:text-sage" : "border border-terracotta/40 bg-terracotta/15 text-terracotta-dark dark:border-terracotta/40 dark:bg-terracotta/15 dark:text-[#F09E88]"}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${isRegistered ? "bg-sage-dark dark:bg-sage" : "bg-terracotta"}`} aria-hidden="true" />
+                        {isRegistered ? "Registered" : "Not registered"}
+                      </span>
                     </div>
-                    <span className="shrink-0 rounded-full border border-sage/50 bg-sage/20 px-2.5 py-1 text-xs font-semibold text-sage-dark dark:border-sage/45 dark:bg-sage/18 dark:text-sage">{registration.paymentStatus}</span>
-                  </div>
-                  <p className="mt-3 break-words text-sm font-medium text-charcoal dark:text-[#E8ECEF]">{registration.workshopName}</p>
-                  <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">
-                    {registration.sessionDate ? formatWorkshopDate(registration.sessionDate) : "—"}
-                    {registration.start ? ` · ${registration.start}` : ""}
-                  </p>
-                  <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-charcoal/10 pt-3 text-xs dark:border-white/10">
-                    <div><dt className="text-charcoal/60 dark:text-[#9DA7AE]">Booking</dt><dd className="break-words font-medium dark:text-[#E8ECEF]">{registration.bookingStatus}</dd></div>
-                    <div><dt className="text-charcoal/60 dark:text-[#9DA7AE]">Ticket</dt><dd className="break-words font-medium dark:text-[#E8ECEF]">{registration.ticketStatus}</dd></div>
-                  </dl>
-                  <button type="button" onClick={() => setSelectedRegistration(registration)} className="mt-3 rounded-full px-3 text-sm font-medium text-terracotta-dark underline underline-offset-4 hover:text-brand-blue dark:text-[#F09E88] dark:hover:text-[#96B7DA]">
-                    View registration details
-                  </button>
-                </li>
-              ))}
+                    <p className="mt-3 break-words text-sm font-medium text-charcoal dark:text-[#E8ECEF]">{registration.workshopName}</p>
+                    <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">
+                      {registration.sessionDate ? formatWorkshopDate(registration.sessionDate) : "—"}
+                      {registration.start ? ` · ${registration.start}` : ""}
+                    </p>
+                    <dl className="mt-3 grid grid-cols-2 gap-3 border-t border-charcoal/10 pt-3 text-xs dark:border-white/10">
+                      <div>
+                        <dt className="text-charcoal/60 dark:text-[#9DA7AE]">Check-in</dt>
+                        <dd className="mt-1 font-medium">
+                          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${isScanned ? "border border-brand-blue/35 bg-brand-blue/15 text-brand-blue dark:border-[#96B7DA]/35 dark:bg-[#96B7DA]/15 dark:text-[#96B7DA]" : registration.ticketStatus === "valid" ? "border border-sage/50 bg-sage/15 text-sage-dark dark:border-sage/35 dark:bg-sage/10 dark:text-sage" : "border border-charcoal/20 bg-charcoal/5 text-charcoal/60 dark:border-white/10 dark:bg-white/5 dark:text-[#9DA7AE]"}`}>
+                            {isScanned ? "Already scanned" : registration.ticketStatus === "valid" ? "Valid · Not scanned" : "No ticket"}
+                          </span>
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-charcoal/60 dark:text-[#9DA7AE]">Payment</dt>
+                        <dd className="mt-1 font-medium dark:text-[#E8ECEF]">{registration.paymentStatus}</dd>
+                      </div>
+                    </dl>
+                    <button type="button" onClick={() => setSelectedRegistration(registration)} className="mt-3 rounded-full px-3 text-sm font-medium text-terracotta-dark underline underline-offset-4 hover:text-brand-blue dark:text-[#F09E88] dark:hover:text-[#96B7DA]">
+                      View registration details
+                    </button>
+                  </li>
+                );
+              })}
               {displayedRegistrations.length === 0 && !loading && (
                 <li className="rounded-2xl border border-sage/35 bg-white p-6 text-center text-sm text-charcoal/65 dark:border-white/10 dark:bg-[#21292E] dark:text-[#9DA7AE]">No registrations match these filters.</li>
               )}
@@ -339,41 +395,84 @@ export default function AdminDashboardPage() {
                   <tr>
                     <th className="px-4 py-3.5">Customer</th>
                     <th className="px-4 py-3.5">Event</th>
-                    <th className="px-4 py-3.5">Booking</th>
+                    <th className="px-4 py-3.5">Registration</th>
+                    <th className="px-4 py-3.5">Ticket / QR Scan</th>
                     <th className="px-4 py-3.5">Payment</th>
-                    <th className="px-4 py-3.5">Ticket</th>
-                    <th className="px-4 py-3.5">Registered</th>
+                    <th className="px-4 py-3.5">Booking date</th>
                     <th className="px-4 py-3.5">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-charcoal/10 dark:divide-white/10">
-                  {displayedRegistrations.map((registration) => (
-                    <tr key={registration.bookingId} className="transition-colors hover:bg-brand-ivory/60 dark:hover:bg-white/5">
-                      <td className="px-4 py-4">
-                        <p className="font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
-                        <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.email}</p>
-                        <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.phone}</p>
-                      </td>
-                      <td className="px-4 py-4">
-                        <p className="font-medium text-charcoal dark:text-[#E8ECEF]">{registration.workshopName}</p>
-                        <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">
-                          {registration.sessionDate ? formatWorkshopDate(registration.sessionDate) : "—"}
-                          {registration.start ? ` · ${registration.start}` : ""}
-                        </p>
-                      </td>
-                      <td className="px-4 py-4 dark:text-[#E8ECEF]">{registration.bookingStatus}</td>
-                      <td className="px-4 py-4 dark:text-[#E8ECEF]">{registration.paymentStatus}</td>
-                      <td className="px-4 py-4 dark:text-[#E8ECEF]">{registration.ticketStatus}</td>
-                      <td className="px-4 py-4 dark:text-[#C5CCD1]">
-                        {registration.createdAt
-                          ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(registration.createdAt))
-                          : "—"}
-                      </td>
-                      <td className="px-4 py-4">
-                        <button type="button" onClick={() => setSelectedRegistration(registration)} className="font-medium text-brand-blue underline underline-offset-4 hover:text-terracotta-dark dark:text-[#96B7DA] dark:hover:text-[#F09E88]">View</button>
-                      </td>
-                    </tr>
-                  ))}
+                  {displayedRegistrations.map((registration) => {
+                    const isRegistered = Boolean(registration.isRegistered || registration.bookingStatus === "confirmed");
+                    const isScanned = Boolean(registration.isScanned || registration.ticketStatus === "redeemed");
+                    return (
+                      <tr key={registration.bookingId} className="transition-colors hover:bg-brand-ivory/60 dark:hover:bg-white/5">
+                        <td className="px-4 py-4">
+                          <p className="font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
+                          <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.email}</p>
+                          <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.phone}</p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <p className="font-medium text-charcoal dark:text-[#E8ECEF]">{registration.workshopName}</p>
+                          <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">
+                            {registration.sessionDate ? formatWorkshopDate(registration.sessionDate) : "—"}
+                            {registration.start ? ` · ${registration.start}` : ""}
+                          </p>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            isRegistered
+                              ? "border border-sage/60 bg-sage/25 text-sage-dark dark:border-sage/45 dark:bg-sage/20 dark:text-sage"
+                              : "border border-terracotta/40 bg-terracotta/15 text-terracotta-dark dark:border-terracotta/40 dark:bg-terracotta/15 dark:text-[#F09E88]"
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${isRegistered ? "bg-sage-dark dark:bg-sage" : "bg-terracotta"}`} aria-hidden="true" />
+                            {isRegistered ? "Registered" : "Not registered"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4">
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${
+                            isScanned
+                              ? "border border-brand-blue/35 bg-brand-blue/15 text-brand-blue dark:border-[#96B7DA]/35 dark:bg-[#96B7DA]/15 dark:text-[#96B7DA]"
+                              : registration.ticketStatus === "valid"
+                                ? "border border-sage/50 bg-sage/15 text-sage-dark dark:border-sage/35 dark:bg-sage/10 dark:text-sage"
+                                : "border border-charcoal/20 bg-charcoal/5 text-charcoal/60 dark:border-white/10 dark:bg-white/5 dark:text-[#9DA7AE]"
+                          }`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${
+                              isScanned
+                                ? "bg-brand-blue dark:bg-[#96B7DA]"
+                                : registration.ticketStatus === "valid"
+                                  ? "bg-sage-dark dark:bg-sage"
+                                  : "bg-charcoal/40"
+                            }`} aria-hidden="true" />
+                            {isScanned
+                              ? "Already scanned"
+                              : registration.ticketStatus === "valid"
+                                ? "Valid · Not scanned"
+                                : "No ticket"}
+                          </span>
+                          {isScanned && registration.scannedAt && (
+                            <p className="mt-1 text-[11px] text-charcoal/60 dark:text-[#9DA7AE]">
+                              {new Intl.DateTimeFormat("en-IN", { timeStyle: "short" }).format(new Date(registration.scannedAt))}
+                            </p>
+                          )}
+                        </td>
+                        <td className="px-4 py-4 dark:text-[#E8ECEF]">
+                          <span className="rounded-full border border-sage/40 bg-sage/15 px-2.5 py-0.5 text-xs font-medium text-sage-dark dark:border-sage/30 dark:bg-sage/10 dark:text-sage">
+                            {registration.paymentStatus}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 dark:text-[#C5CCD1]">
+                          {registration.createdAt
+                            ? new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(registration.createdAt))
+                            : "—"}
+                        </td>
+                        <td className="px-4 py-4">
+                          <button type="button" onClick={() => setSelectedRegistration(registration)} className="font-medium text-brand-blue underline underline-offset-4 hover:text-terracotta-dark dark:text-[#96B7DA] dark:hover:text-[#F09E88]">View</button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                   {displayedRegistrations.length === 0 && !loading && (
                     <tr><td className="px-4 py-8 text-center text-charcoal/65 dark:text-[#9DA7AE]" colSpan="7">No registrations match these filters.</td></tr>
                   )}
@@ -414,31 +513,46 @@ export default function AdminDashboardPage() {
               </form>
               {scanResult && (
                 <div
-                  className={`mt-5 rounded-2xl border p-4 ${scanResult.status === "valid"
-                    ? "border-sage/60 bg-sage/25 text-charcoal dark:border-sage/45 dark:bg-sage/18 dark:text-[#E8ECEF]"
-                    : scanResult.status === "already_used"
-                      ? "border-gold/70 bg-gold/25 text-charcoal dark:border-gold/45 dark:bg-gold/15 dark:text-[#F4E6C5]"
-                      : "border-terracotta/50 bg-terracotta/12 text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F09E88]"
-                    }`}
+                  className={`mt-5 rounded-2xl border p-4 sm:p-5 ${
+                    scanResult.status === "valid"
+                      ? "border-sage/60 bg-sage/25 text-charcoal dark:border-sage/45 dark:bg-sage/18 dark:text-[#E8ECEF]"
+                      : scanResult.status === "already_used"
+                        ? "border-gold/70 bg-gold/25 text-charcoal dark:border-gold/45 dark:bg-gold/15 dark:text-[#F4E6C5]"
+                        : "border-terracotta/50 bg-terracotta/12 text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F09E88]"
+                  }`}
                   role="status"
                   aria-live="polite"
                 >
-                  <p className="font-semibold">
-                    {scanResult.status === "valid"
-                      ? "Valid ticket · redeemed"
-                      : scanResult.status === "already_used"
-                        ? "Already used"
-                        : "Invalid ticket"}
+                  <p className="flex items-center gap-2 text-base font-semibold">
+                    {scanResult.status === "valid" ? (
+                      <>
+                        <span className="text-lg">✓</span> Valid ticket · Scanned successfully
+                      </>
+                    ) : scanResult.status === "already_used" ? (
+                      <>
+                        <span className="text-lg">⚠️</span> Already scanned
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-lg">✕</span> Invalid ticket
+                      </>
+                    )}
                   </p>
-                  <p className="mt-1 text-sm">{scanResult.message}</p>
+                  <p className="mt-1.5 text-sm leading-relaxed">{scanResult.message}</p>
                   {scanResult.customerName && (
                     <p className="mt-2 text-sm font-medium">
-                      {scanResult.customerName} · {scanResult.workshopName}
+                      Attendee: <strong className="font-semibold">{scanResult.customerName}</strong> · {scanResult.workshopName}
                     </p>
                   )}
                   {scanResult.sessionDate && (
                     <p className="mt-1 text-xs opacity-80">
-                      {formatWorkshopDate(scanResult.sessionDate)} · {scanResult.start}–{scanResult.end}
+                      Session: {formatWorkshopDate(scanResult.sessionDate)} · {scanResult.start}–{scanResult.end}
+                    </p>
+                  )}
+                  {scanResult.redeemedAt && (
+                    <p className="mt-2 text-xs font-medium opacity-90">
+                      {scanResult.status === "valid" ? "Check-in recorded: " : "First scanned: "}
+                      {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(scanResult.redeemedAt))}
                     </p>
                   )}
                 </div>
@@ -460,9 +574,30 @@ export default function AdminDashboardPage() {
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Booking ID</dt><dd className="mt-0.5 break-all dark:text-[#E8ECEF]">{selectedRegistration.bookingId}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Event</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.workshopName}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Event date and time</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.sessionDate ? `${formatWorkshopDate(selectedRegistration.sessionDate)} · ${selectedRegistration.start}–${selectedRegistration.end}` : "—"}</dd></div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Registration status</dt>
+                    <dd className="mt-1">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${selectedRegistration.isRegistered || selectedRegistration.bookingStatus === "confirmed" ? "bg-sage/20 text-sage-dark border border-sage/50 dark:border-sage/40 dark:bg-sage/15 dark:text-sage" : "bg-terracotta/15 text-terracotta-dark border border-terracotta/40 dark:border-terracotta/40 dark:bg-terracotta/15 dark:text-[#F09E88]"}`}>
+                        {selectedRegistration.isRegistered || selectedRegistration.bookingStatus === "confirmed" ? "Registered" : "Not registered"}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Check-in / Scan</dt>
+                    <dd className="mt-1">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold ${selectedRegistration.isScanned || selectedRegistration.ticketStatus === "redeemed" ? "bg-brand-blue/15 text-brand-blue border border-brand-blue/35 dark:border-[#96B7DA]/35 dark:bg-[#96B7DA]/15 dark:text-[#96B7DA]" : selectedRegistration.ticketStatus === "valid" ? "bg-sage/15 text-sage-dark border border-sage/40 dark:border-sage/35 dark:bg-sage/10 dark:text-sage" : "bg-charcoal/5 text-charcoal/60 border border-charcoal/20 dark:border-white/10 dark:bg-white/5 dark:text-[#9DA7AE]"}`}>
+                        {selectedRegistration.isScanned || selectedRegistration.ticketStatus === "redeemed" ? "Already scanned" : selectedRegistration.ticketStatus === "valid" ? "Valid · Not scanned" : "No ticket"}
+                      </span>
+                    </dd>
+                  </div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Booking status</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.bookingStatus}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Payment status</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.paymentStatus}</dd></div>
-                  <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Ticket status</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.ticketStatus}</dd></div>
+                  {selectedRegistration.scannedAt && (
+                    <div className="sm:col-span-2">
+                      <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Scanned at</dt>
+                      <dd className="mt-0.5 dark:text-[#E8ECEF]">{new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(selectedRegistration.scannedAt))}</dd>
+                    </div>
+                  )}
                 </dl>
               </section>
             </div>

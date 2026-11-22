@@ -100,6 +100,8 @@ export async function getAdminDashboard(searchTerm = "") {
     .map((booking) => {
       const payment = paymentsByBooking.get(booking.id);
       const ticket = ticketsByBooking.get(booking.id);
+      const isRegistered = booking.status === "confirmed" && payment?.status === "captured";
+      const isScanned = ticket?.status === "redeemed" || Boolean(booking.checkedIn);
       return {
         bookingId: booking.id,
         customerId: booking.customerId,
@@ -114,6 +116,11 @@ export async function getAdminDashboard(searchTerm = "") {
         bookingStatus: booking.status,
         paymentStatus: payment?.status || "not_started",
         ticketStatus: ticket?.status || "none",
+        isRegistered,
+        registrationStatus: isRegistered ? "registered" : "not_registered",
+        isScanned,
+        scannedStatus: isScanned ? "already_scanned" : "not_scanned",
+        scannedAt: toIso(ticket?.redeemedAt || booking.scannedAt),
         createdAt: toIso(booking.createdAt),
       };
     })
@@ -132,6 +139,8 @@ export async function getAdminDashboard(searchTerm = "") {
           registration.bookingStatus,
           registration.paymentStatus,
           registration.ticketStatus,
+          registration.isRegistered ? "registered" : "not registered",
+          registration.isScanned ? "already scanned" : "not scanned",
         ].some((value) => value.toLocaleLowerCase().includes(normalizedSearch)),
       )
     : registrations;
@@ -200,9 +209,13 @@ export async function redeemTicket(qrToken, adminUid) {
     ) {
       return {
         status: "already_used",
-        message: "This ticket has already been used.",
+        message: "This ticket has already been scanned.",
         workshopName: ticket.workshopName || booking.workshopName || "",
-        customerName: ticket.customerName || "",
+        customerName: ticket.customerName || booking.participant?.fullName || "",
+        sessionDate: ticket.sessionDate || booking.sessionDate || "",
+        start: ticket.start || booking.start || "",
+        end: ticket.end || booking.end || "",
+        redeemedAt: ticket.redeemedAt?.toDate ? ticket.redeemedAt.toDate().toISOString() : null,
       };
     }
 
@@ -229,15 +242,20 @@ export async function redeemTicket(qrToken, adminUid) {
       redeemedAt,
       redeemedBy: adminUid,
     });
+    transaction.update(bookingRef, {
+      checkedIn: true,
+      scannedAt: redeemedAt,
+      scannedBy: adminUid,
+    });
 
     return {
       status: "valid",
       message: "Ticket is valid and has been redeemed.",
-      workshopName: ticket.workshopName,
-      sessionDate: ticket.sessionDate,
-      start: ticket.start,
-      end: ticket.end,
-      customerName: ticket.customerName,
+      workshopName: ticket.workshopName || booking.workshopName,
+      sessionDate: ticket.sessionDate || booking.sessionDate,
+      start: ticket.start || booking.start,
+      end: ticket.end || booking.end,
+      customerName: ticket.customerName || booking.participant?.fullName,
       redeemedAt: redeemedAt.toDate().toISOString(),
     };
   });

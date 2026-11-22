@@ -215,8 +215,9 @@ router.get("/dashboard", requireFirebaseUser, requireAdmin, async (req, res) => 
 });
 
 router.post("/tickets/redeem", requireFirebaseUser, requireAdmin, async (req, res) => {
-  const qrToken = req.body?.qrToken;
-  if (typeof qrToken !== "string" || !/^[A-Za-z0-9_-]{43}$/.test(qrToken)) {
+  const rawToken = req.body?.qrToken;
+  const qrToken = typeof rawToken === "string" ? rawToken.trim() : "";
+  if (!qrToken || !/^[A-Za-z0-9_-]{43}$/.test(qrToken)) {
     return res.status(400).json({
       status: "invalid",
       message: "Scan or enter a valid ticket QR code.",

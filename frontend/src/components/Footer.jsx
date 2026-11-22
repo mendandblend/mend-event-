@@ -4,14 +4,25 @@ import { NAV_LINKS, SITE } from "../data/siteData.js";
 import { POLICY_NAME, POLICY_PATH } from "../data/policyData.js";
 
 export default function Footer() {
+  const handleLogoClick = (e) => {
+    if (window.location.pathname === "/") {
+      e.preventDefault();
+      if (window.location.hash || window.location.search) {
+        window.history.replaceState(null, "", "/");
+      }
+      window.scrollTo(0, 0);
+      window.location.reload();
+    }
+  };
+
   return (
     <footer className="bg-footer-atmosphere relative overflow-hidden border-t-2 border-gold/40 bg-brand-blue px-6 py-14 text-white transition-colors duration-200 dark:border-gold/30 dark:bg-[#213347]">
       <div className="relative z-10 mx-auto grid max-w-6xl gap-10 md:grid-cols-3">
         <div>
-          <div className="flex items-center gap-3">
+          <Link to="/" onClick={handleLogoClick} className="flex items-center gap-3 transition-opacity hover:opacity-90">
             <img src={logo} alt="" className="h-12 w-12 rounded-xl object-cover ring-1 ring-white/25" />
             <span className="font-serif text-2xl font-medium tracking-wide text-white">Mend and Blend</span>
-          </div>
+          </Link>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-brand-ivory/85">
             Psychology-inspired workshops for self-discovery, emotional wellness and human connection.
           </p>

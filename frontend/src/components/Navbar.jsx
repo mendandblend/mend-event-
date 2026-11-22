@@ -19,6 +19,18 @@ export default function Navbar() {
   const close = () => setOpen(false);
   const sectionHref = (href) => location.pathname === "/" ? href : `/${href}`;
 
+  const handleLogoClick = (e) => {
+    close();
+    if (location.pathname === "/") {
+      e.preventDefault();
+      if (window.location.hash || window.location.search) {
+        window.history.replaceState(null, "", "/");
+      }
+      window.scrollTo(0, 0);
+      window.location.reload();
+    }
+  };
+
   useEffect(() => {
     if (!user || loading) {
       setIsAdmin(false);
@@ -60,7 +72,7 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 border-b border-gold/25 bg-brand-blue text-white shadow-sm transition-colors duration-200 dark:border-gold/20 dark:bg-[#2A4058]">
       <nav aria-label="Main" className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-        <Link to="/" onClick={close} className="flex items-center gap-3">
+        <Link to="/" onClick={handleLogoClick} className="flex items-center gap-3">
           <img src={logo} alt="" className="h-11 w-11 rounded-xl object-cover ring-1 ring-white/25" />
           <span className="font-serif text-2xl font-medium tracking-wide text-white">Mend and Blend</span>
         </Link>

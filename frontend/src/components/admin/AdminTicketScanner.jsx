@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import ScanFeedbackCard from "./ScanFeedbackCard.jsx";
 
-export default function AdminTicketScanner({ onScan }) {
+export default function AdminTicketScanner({ onScan, scanResult, isVerifying, onClearResult }) {
   const scannerRef = useRef(null);
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
@@ -58,6 +59,16 @@ export default function AdminTicketScanner({ onScan }) {
     };
   }, [scanning, onScan]);
 
+  function handleScanToggle() {
+    setError("");
+    if (scanning) {
+      setScanning(false);
+    } else {
+      onClearResult?.();
+      setScanning(true);
+    }
+  }
+
   return (
     <section className="min-w-0 rounded-3xl border border-sage/45 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#21292E] dark:shadow-black/30 sm:p-8">
       <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-sage-dark dark:text-sage">
@@ -66,27 +77,38 @@ export default function AdminTicketScanner({ onScan }) {
       </p>
       <h2 className="mt-2 text-2xl font-medium text-brand-blue dark:text-[#96B7DA]">Scan a workshop ticket</h2>
       <p className="mt-2 text-sm leading-relaxed text-charcoal/75 dark:text-[#C5CCD1]">
-        Scanning checks the paid booking and redeems a valid ticket once. A second scan will be
-        marked as already used.
+        Scanning checks the paid booking and redeems a valid ticket once. Subsequent scans will be
+        marked as already scanned.
       </p>
+
       {error && (
         <p className="mt-4 rounded-xl border border-terracotta/50 bg-terracotta/10 p-3 text-sm text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F09E88]" role="alert">
           {error}
         </p>
       )}
+
+      {isVerifying && (
+        <div className="mt-4 flex items-center gap-2.5 rounded-xl border border-sage/40 bg-sage/10 p-3 text-sm text-sage-dark dark:border-sage/30 dark:bg-sage/10 dark:text-sage" role="status">
+          <span className="h-2 w-2 rounded-full bg-sage-dark animate-ping" />
+          <span>Verifying ticket QR…</span>
+        </div>
+      )}
+
       <div
         id={elementId}
         className={`mt-5 max-w-full overflow-hidden rounded-2xl border border-sage/35 dark:border-white/15 ${scanning ? "min-h-64" : "hidden"}`}
       />
+
+      {scanResult && !scanning && (
+        <ScanFeedbackCard scanResult={scanResult} onDismiss={onClearResult} />
+      )}
+
       <button
         type="button"
-        onClick={() => {
-          setError("");
-          setScanning((current) => !current);
-        }}
+        onClick={handleScanToggle}
         className="btn-interactive mt-5 rounded-full bg-brand-blue px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-dark hover:shadow-[0_10px_22px_-8px_rgba(64,95,128,0.42)] dark:hover:bg-[#324D69]"
       >
-        {scanning ? "Stop camera" : "Open camera scanner"}
+        {scanning ? "Stop camera" : scanResult ? "Scan next ticket" : "Open camera scanner"}
       </button>
     </section>
   );

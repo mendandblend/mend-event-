@@ -5,6 +5,7 @@ import AdminTicketScanner from "../components/admin/AdminTicketScanner.jsx";
 import AdminEventsSection from "../components/admin/AdminEventsSection.jsx";
 import AdminAdminsSection from "../components/admin/AdminAdminsSection.jsx";
 import AdminRequestsSection from "../components/admin/AdminRequestsSection.jsx";
+import ScanFeedbackCard from "../components/admin/ScanFeedbackCard.jsx";
 import Navbar from "../components/Navbar.jsx";
 import { bookingApi, formatWorkshopDate } from "../booking/api.js";
 import { formatINR } from "../data/siteData.js";
@@ -90,6 +91,7 @@ export default function AdminDashboardPage() {
   const [error, setError] = useState("");
   const [scanToken, setScanToken] = useState("");
   const [scanResult, setScanResult] = useState(null);
+  const [verifyingScan, setVerifyingScan] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(
     () => window.location.hash.slice(1) || "overview",
@@ -163,6 +165,7 @@ export default function AdminDashboardPage() {
     setScanToken(qrToken);
     setScanResult(null);
     setError("");
+    setVerifyingScan(true);
     try {
       const result = await bookingApi("/admin/tickets/redeem", user, {
         method: "POST",
@@ -175,6 +178,8 @@ export default function AdminDashboardPage() {
         status: "invalid",
         message: scanError.message || "Could not validate this ticket.",
       });
+    } finally {
+      setVerifyingScan(false);
     }
   }, [user, loadDashboard]);
 
@@ -484,7 +489,12 @@ export default function AdminDashboardPage() {
           <AdminRequestsSection user={user} onChanged={() => loadDashboard()} />
 
           <section id="ticket-scanner" className="mt-12 scroll-mt-24 grid gap-6 lg:grid-cols-[1fr_1fr]">
-            <AdminTicketScanner onScan={redeemScannedTicket} />
+            <AdminTicketScanner
+              onScan={redeemScannedTicket}
+              scanResult={scanResult}
+              isVerifying={verifyingScan}
+              onClearResult={() => setScanResult(null)}
+            />
             <div className="rounded-3xl border border-sage/45 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-[#21292E] dark:shadow-black/30 sm:p-8">
               <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-sage-dark dark:text-sage">
                 <span className="h-px w-4 bg-terracotta" aria-hidden="true" />
@@ -505,58 +515,13 @@ export default function AdminDashboardPage() {
                 </label>
                 <button
                   type="submit"
-                  disabled={scanToken.trim().length !== 43}
+                  disabled={scanToken.trim().length !== 43 || verifyingScan}
                   className="btn-interactive self-start rounded-full bg-terracotta-dark px-5 py-3 text-sm font-medium text-white shadow-sm hover:bg-[#9D4D38] hover:shadow-[0_10px_22px_-8px_rgba(181,91,68,0.42)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Validate and redeem
+                  {verifyingScan ? "Validating…" : "Validate and redeem"}
                 </button>
               </form>
-              {scanResult && (
-                <div
-                  className={`mt-5 rounded-2xl border p-4 sm:p-5 ${
-                    scanResult.status === "valid"
-                      ? "border-sage/60 bg-sage/25 text-charcoal dark:border-sage/45 dark:bg-sage/18 dark:text-[#E8ECEF]"
-                      : scanResult.status === "already_used"
-                        ? "border-gold/70 bg-gold/25 text-charcoal dark:border-gold/45 dark:bg-gold/15 dark:text-[#F4E6C5]"
-                        : "border-terracotta/50 bg-terracotta/12 text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F09E88]"
-                  }`}
-                  role="status"
-                  aria-live="polite"
-                >
-                  <p className="flex items-center gap-2 text-base font-semibold">
-                    {scanResult.status === "valid" ? (
-                      <>
-                        <span className="text-lg">✓</span> Valid ticket · Scanned successfully
-                      </>
-                    ) : scanResult.status === "already_used" ? (
-                      <>
-                        <span className="text-lg">⚠️</span> Already scanned
-                      </>
-                    ) : (
-                      <>
-                        <span className="text-lg">✕</span> Invalid ticket
-                      </>
-                    )}
-                  </p>
-                  <p className="mt-1.5 text-sm leading-relaxed">{scanResult.message}</p>
-                  {scanResult.customerName && (
-                    <p className="mt-2 text-sm font-medium">
-                      Attendee: <strong className="font-semibold">{scanResult.customerName}</strong> · {scanResult.workshopName}
-                    </p>
-                  )}
-                  {scanResult.sessionDate && (
-                    <p className="mt-1 text-xs opacity-80">
-                      Session: {formatWorkshopDate(scanResult.sessionDate)} · {scanResult.start}–{scanResult.end}
-                    </p>
-                  )}
-                  {scanResult.redeemedAt && (
-                    <p className="mt-2 text-xs font-medium opacity-90">
-                      {scanResult.status === "valid" ? "Check-in recorded: " : "First scanned: "}
-                      {new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(scanResult.redeemedAt))}
-                    </p>
-                  )}
-                </div>
-              )}
+              <ScanFeedbackCard scanResult={scanResult} onDismiss={() => setScanResult(null)} />
             </div>
           </section>
           {dashboard.adminRole === "super_admin" && <AdminAdminsSection user={user} />}

@@ -57,15 +57,31 @@ export default function WorkshopCard({ workshop, dateLabel, onRegister }) {
         </svg>
       </div>
       {poster && (
-        <div className="image-frame mt-5 overflow-hidden rounded-2xl border border-charcoal/10 bg-brand-blue/5 shadow-xs dark:border-white/10 dark:bg-white/5">
+        <button
+          type="button"
+          onClick={() => {
+            if (workshop.canRegister) onRegister(workshop);
+          }}
+          disabled={!workshop.canRegister}
+          aria-label={workshop.canRegister ? `Book your place for ${title}` : `${title} poster`}
+          className={`image-frame mt-5 block w-full overflow-hidden rounded-2xl border border-charcoal/10 bg-brand-blue/5 shadow-xs text-left dark:border-white/10 dark:bg-white/5 transition-all duration-300 ${
+            workshop.canRegister
+              ? "cursor-pointer group/poster hover:shadow-md hover:ring-2 hover:ring-brand-blue/30 active:scale-[0.99] dark:hover:ring-[#96B7DA]/40"
+              : "cursor-default"
+          }`}
+        >
           <img
             src={poster}
             alt={`${title} event poster`}
             loading="lazy"
             referrerPolicy="no-referrer"
-            className="image-frame__img aspect-[4/5] w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            className={`image-frame__img aspect-[4/5] w-full object-cover transition-transform duration-300 ${
+              workshop.canRegister
+                ? "group-hover/poster:scale-[1.03] group-hover:scale-[1.02]"
+                : ""
+            }`}
           />
-        </div>
+        </button>
       )}
       <h3 className="mt-5 text-3xl leading-tight font-medium text-brand-blue dark:text-[#96B7DA]">{title}</h3>
       <div className="mt-3 border-l-2 border-gold pl-3">

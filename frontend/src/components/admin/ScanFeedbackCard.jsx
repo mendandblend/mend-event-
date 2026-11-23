@@ -77,6 +77,11 @@ export default function ScanFeedbackCard({ scanResult, onDismiss }) {
           <p className="mt-2 text-xs sm:text-sm font-medium">
             Attendee: <strong className="font-semibold">{scanResult.customerName}</strong>
             {scanResult.workshopName ? ` · ${scanResult.workshopName}` : ""}
+            {scanResult.seats && scanResult.seats > 1 ? (
+              <span className="ml-2 inline-flex items-center rounded-full bg-brand-blue/15 px-2 py-0.5 text-xs font-bold text-brand-blue dark:bg-[#96B7DA]/25 dark:text-[#96B7DA]">
+                {scanResult.seats} seats
+              </span>
+            ) : null}
           </p>
         )}
 

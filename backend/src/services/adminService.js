@@ -77,12 +77,12 @@ export async function getAdminDashboard(searchTerm = "") {
   const workshopSummaries = workshops
     .map((workshop) => {
       const workshopBookings = bookingsByWorkshop.get(workshop.id) || [];
-      const registrations = workshopBookings.filter(
-        (booking) => booking.status === "confirmed",
-      ).length;
-      const bookedSeats = workshopBookings.filter(
-        (booking) => booking.status === "confirmed" || isActiveHold(booking, now),
-      ).length;
+      const registrations = workshopBookings
+        .filter((booking) => booking.status === "confirmed")
+        .reduce((sum, b) => sum + (Number(b.seats) || 1), 0);
+      const bookedSeats = workshopBookings
+        .filter((booking) => booking.status === "confirmed" || isActiveHold(booking, now))
+        .reduce((sum, b) => sum + (Number(b.seats) || 1), 0);
 
       const availableSeats = Math.max(0, workshop.capacity - bookedSeats);
       return {
@@ -113,6 +113,8 @@ export async function getAdminDashboard(searchTerm = "") {
         sessionDate: booking.sessionDate || "",
         start: booking.start || "",
         end: booking.end || "",
+        seats: Number(booking.seats) || Number(ticket?.seats) || 1,
+        amount: booking.amount,
         bookingStatus: booking.status,
         paymentStatus: payment?.status || "not_started",
         ticketStatus: ticket?.status || "none",
@@ -215,6 +217,7 @@ export async function redeemTicket(qrToken, adminUid) {
         sessionDate: ticket.sessionDate || booking.sessionDate || "",
         start: ticket.start || booking.start || "",
         end: ticket.end || booking.end || "",
+        seats: Number(ticket.seats) || Number(booking.seats) || 1,
         redeemedAt: ticket.redeemedAt?.toDate ? ticket.redeemedAt.toDate().toISOString() : null,
       };
     }
@@ -256,6 +259,7 @@ export async function redeemTicket(qrToken, adminUid) {
       start: ticket.start || booking.start,
       end: ticket.end || booking.end,
       customerName: ticket.customerName || booking.participant?.fullName,
+      seats: Number(ticket.seats) || Number(booking.seats) || 1,
       redeemedAt: redeemedAt.toDate().toISOString(),
     };
   });

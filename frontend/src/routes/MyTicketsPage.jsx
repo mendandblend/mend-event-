@@ -163,6 +163,11 @@ export default function MyTicketsPage() {
                         >
                           {valid ? "Valid ticket" : "Not valid"}
                         </span>
+                        {ticket.seats && ticket.seats > 1 ? (
+                          <span className="rounded-full border border-brand-blue/30 bg-brand-blue/10 px-3 py-1 text-xs font-semibold text-brand-blue dark:border-[#96B7DA]/35 dark:bg-[#96B7DA]/15 dark:text-[#96B7DA]">
+                            {ticket.seats} seats
+                          </span>
+                        ) : null}
                       </div>
                       <h2 className="mt-3 text-3xl font-medium text-brand-blue dark:text-[#96B7DA]">
                         {ticket.workshopName || "Workshop ticket"}
@@ -186,6 +191,14 @@ export default function MyTicketsPage() {
                           <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Venue</dt>
                           <dd className="mt-1 text-charcoal/85 dark:text-[#C5CCD1]">{ticket.venue || "Venue details to be confirmed"}</dd>
                         </div>
+                        {ticket.seats && ticket.seats > 1 ? (
+                          <div className="sm:col-span-2">
+                            <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Admission</dt>
+                            <dd className="mt-1 font-semibold text-brand-blue dark:text-[#96B7DA]">
+                              Admits {ticket.seats} persons ({ticket.seats} seats reserved)
+                            </dd>
+                          </div>
+                        ) : null}
                       </dl>
                       <p className="mt-5 text-xs text-charcoal/60 dark:text-[#9DA7AE]">
                         Issued{" "}

@@ -13,6 +13,8 @@ export function createTicketRecord({ booking, bookingId, customerId, issuedAt })
     venue: booking.venue ||
       [booking.venueName, booking.venueAddress].filter(Boolean).join(", "),
     customerName: booking.participant.fullName,
+    seats: Number(booking.seats) || 1,
+    amount: booking.amount,
     qrToken: randomBytes(32).toString("base64url"),
     status: "valid",
     isValid: true,

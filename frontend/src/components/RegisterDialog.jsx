@@ -11,6 +11,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
   const ref = useRef(null);
   const checkoutDialogCloseRef = useRef(false);
   const [participant, setParticipant] = useState({ fullName: "", email: "", phone: "" });
+  const [seats, setSeats] = useState(1);
   const [reservation, setReservation] = useState(null);
   const [policyAccepted, setPolicyAccepted] = useState(false);
   const [policyError, setPolicyError] = useState("");
@@ -30,15 +31,17 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
   }, [workshop?.id]);
 
   const hasHeldOrConfirmedSeat = Boolean(reservation || paymentConfirmed);
+  const bookedSeatsCount = Number(reservation?.seats) || seats;
   const baseSeats = typeof workshop?.availableSeats === "number" ? workshop.availableSeats : 0;
   const displayedSeats = Math.max(
     0,
     hasHeldOrConfirmedSeat
       ? (baseSeats < initialSeatsRef.current
           ? baseSeats
-          : baseSeats - 1)
+          : baseSeats - bookedSeatsCount)
       : baseSeats,
   );
+  const maxSelectableSeats = Math.max(1, Math.min(10, baseSeats));
 
   function closeDialogForCheckout() {
     checkoutDialogCloseRef.current = true;
@@ -64,6 +67,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
       email: user?.email || "",
       phone: "",
     });
+    setSeats(1);
     setReservation(null);
     setPolicyAccepted(false);
     setPolicyError("");
@@ -102,6 +106,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
         body: JSON.stringify({
           eventId: workshop.id,
           participant,
+          seats,
           policyAccepted: true,
           policyVersion: POLICY_VERSION,
         }),
@@ -192,7 +197,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
         amount: order.amount,
         currency: order.currency,
         name: "Mend and Blend",
-        description: `${reservation.workshopName} workshop`,
+        description: `${reservation.workshopName} (${reservation.seats || 1} ${(reservation.seats || 1) === 1 ? "seat" : "seats"})`,
         order_id: order.orderId,
         prefill: {
           name: participant.fullName,
@@ -340,10 +345,60 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
             </div>
           </div>
 
+          {!reservation && displayedSeats > 0 && (
+            <div className="mt-4 rounded-2xl border border-sage/40 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-[#181E22]">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <span className="block text-sm font-medium text-charcoal dark:text-brand-ivory">
+                    Number of seats
+                  </span>
+                  <span className="text-xs text-charcoal/65 dark:text-brand-ivory/60">
+                    {formatINR(workshop.price)} per attendee
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label="Decrease seat count"
+                    disabled={seats <= 1 || submitting}
+                    onClick={() => setSeats((s) => Math.max(1, s - 1))}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-charcoal/20 bg-brand-ivory text-base font-bold text-charcoal hover:bg-sage/20 disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/20 dark:bg-[#21292E] dark:text-brand-ivory"
+                  >
+                    −
+                  </button>
+                  <span className="min-w-8 text-center font-serif text-lg font-bold tabular-nums text-brand-blue dark:text-[#96B7DA]">
+                    {seats}
+                  </span>
+                  <button
+                    type="button"
+                    aria-label="Increase seat count"
+                    disabled={seats >= maxSelectableSeats || submitting}
+                    onClick={() => setSeats((s) => Math.min(maxSelectableSeats, s + 1))}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-charcoal/20 bg-brand-ivory text-base font-bold text-charcoal hover:bg-sage/20 disabled:cursor-not-allowed disabled:opacity-35 dark:border-white/20 dark:bg-[#21292E] dark:text-brand-ivory"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              {seats > 1 && (
+                <div className="mt-3 flex items-center justify-between border-t border-charcoal/10 pt-2.5 text-xs sm:text-sm dark:border-white/10">
+                  <span className="text-charcoal/70 dark:text-brand-ivory/70">
+                    Total for {seats} seats
+                  </span>
+                  <span className="font-serif text-base font-bold text-brand-blue dark:text-[#96B7DA]">
+                    {formatINR(workshop.price * seats)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
           {reservation ? (
             <div className="mt-6" role="status">
               <h4 className="text-xl font-medium text-brand-blue dark:text-[#96B7DA]">
-                {paymentConfirmed ? "Booking confirmed" : "Your seat is temporarily reserved"}
+                {paymentConfirmed
+                  ? "Booking confirmed"
+                  : `${(reservation.seats || 1) > 1 ? `${reservation.seats} seats are` : "Your seat is"} temporarily reserved`}
               </h4>
               <p
                 className={`mt-3 rounded-2xl border p-4 leading-relaxed ${
@@ -497,8 +552,8 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                 </p>
               )}
               <div className="flex flex-wrap gap-3 pt-2">
-                <Button type="submit" variant="accent" disabled={submitting || displayedSeats === 0}>
-                  {submitting ? "Reserving…" : "Reserve seat"}
+                <Button type="submit" variant="accent" disabled={submitting || displayedSeats === 0 || seats > displayedSeats}>
+                  {submitting ? "Reserving…" : seats > 1 ? `Reserve ${seats} seats` : "Reserve seat"}
                 </Button>
                 <Button variant="secondary" onClick={onClose}>Cancel</Button>
               </div>

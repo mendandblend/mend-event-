@@ -103,3 +103,30 @@ test("duplicate active reservations are rejected and expired holds can be replac
   assert.equal(replacement.status, "reserved");
   assert.equal(db.records("bookings").get("replacement-booking").status, "reserved");
 });
+
+test("multiple seats can be booked in a single reservation and atomically reserve capacity", async () => {
+  const db = makeDatabase({ capacity: 5 });
+  const reservation = await reserve(db, { seats: 3 });
+  assert.equal(reservation.seats, 3);
+  assert.equal(reservation.amount, 1500 * 3);
+  assert.equal(reservation.availableSeats, 2);
+
+  const booking = db.records("bookings").get("new-booking");
+  assert.equal(booking.seats, 3);
+  assert.equal(booking.amount, 4500);
+
+  // Attempting to reserve 3 more seats when only 2 remain rejects with 409
+  await assert.rejects(
+    createReservationWithDatabase({
+      db,
+      uid: "customer-2",
+      workshopId: "event-1",
+      participant,
+      seats: 3,
+      policyAcceptance: { policyAccepted: true, policyVersion: PAYMENT_POLICY_VERSION },
+      now,
+      bookingId: "overbooking",
+    }),
+    (error) => error instanceof BookingError && error.status === 409,
+  );
+});

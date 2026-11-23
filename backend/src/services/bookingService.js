@@ -45,9 +45,23 @@ export function activeBookingQueries(db, workshopId, now) {
 }
 
 export function countActiveBookings(snapshots, now) {
-  return snapshots
-    .flatMap((snapshot) => snapshot.docs)
-    .filter((booking) => isActive(booking.data(), now)).length;
+  const uniqueDocs = new Map();
+  for (const snapshot of snapshots) {
+    if (Array.isArray(snapshot?.docs)) {
+      for (const doc of snapshot.docs) {
+        if (!uniqueDocs.has(doc.id)) {
+          uniqueDocs.set(doc.id, doc.data());
+        }
+      }
+    }
+  }
+  let total = 0;
+  for (const data of uniqueDocs.values()) {
+    if (isActive(data, now)) {
+      total += Number(data.seats) || 1;
+    }
+  }
+  return total;
 }
 
 export function ticketLimitDocumentId(uid, workshopId) {
@@ -152,6 +166,7 @@ export async function createReservationWithDatabase({
   uid,
   workshopId,
   participant,
+  seats = 1,
   policyAcceptance,
   now = Timestamp.now(),
   bookingId = randomUUID(),
@@ -159,6 +174,8 @@ export async function createReservationWithDatabase({
   // Enforced here as well as in the route so no caller can create a booking
   // without a valid acceptance. Nothing is written when this throws.
   validatePolicyAcceptance(policyAcceptance);
+  const requestedSeats =
+    Number.isInteger(seats) && seats >= 1 && seats <= 10 ? seats : 1;
   const requestedExpiresAt = Timestamp.fromMillis(
     now.toMillis() + bookingHoldMinutes * 60 * 1000,
   );
@@ -207,8 +224,14 @@ export async function createReservationWithDatabase({
     }
 
     const occupied = countActiveBookings(activeBookings, now);
-    if (occupied >= workshop.capacity) {
-      throw new BookingError(409, "This event is sold out.");
+    if (occupied + requestedSeats > workshop.capacity) {
+      const remaining = Math.max(0, workshop.capacity - occupied);
+      throw new BookingError(
+        409,
+        remaining === 0
+          ? "This event is sold out."
+          : `Only ${remaining} seat${remaining === 1 ? "" : "s"} left for this event.`,
+      );
     }
     const registrationCloseMillis = workshop.registrationCloseAt?.toMillis?.() ??
       (typeof workshop.registrationCloseAt === "string"
@@ -219,6 +242,9 @@ export async function createReservationWithDatabase({
           Math.min(requestedExpiresAt.toMillis(), registrationCloseMillis),
         )
       : requestedExpiresAt;
+
+    const unitPrice = Number(workshop.price) || 0;
+    const totalAmount = unitPrice * requestedSeats;
 
     transaction.update(workshopRef, {
       reservationVersion: (workshop.reservationVersion || 0) + 1,
@@ -234,7 +260,9 @@ export async function createReservationWithDatabase({
       end: workshop.end,
       venue: workshop.venue ||
         [workshop.venueName, workshop.venueAddress].filter(Boolean).join(", "),
-      amount: workshop.price,
+      seats: requestedSeats,
+      unitPrice,
+      amount: totalAmount,
       currency: "INR",
       status: "reserved",
       participant,
@@ -245,6 +273,7 @@ export async function createReservationWithDatabase({
       customerId: uid,
       workshopId,
       bookingId,
+      seats: requestedSeats,
       status: "reserved",
       expiresAt,
       updatedAt: now,
@@ -264,12 +293,12 @@ export async function createReservationWithDatabase({
       sessionDate: workshop.date,
       start: workshop.start,
       end: workshop.end,
-      amount: workshop.price,
+      seats: requestedSeats,
+      unitPrice,
+      amount: totalAmount,
       currency: "INR",
       status: "reserved",
-      availableSeats: Math.max(0, workshop.capacity - occupied - 1),
-      amount: workshop.price,
-      currency: "INR",
+      availableSeats: Math.max(0, workshop.capacity - occupied - requestedSeats),
       holdMinutes: bookingHoldMinutes,
       policyVersion: PAYMENT_POLICY_VERSION,
       expiresAt: expiresAt.toDate().toISOString(),
@@ -283,6 +312,7 @@ export async function createReservation({
   uid,
   workshopId,
   participant,
+  seats = 1,
   policyAcceptance,
 }) {
   return createReservationWithDatabase({
@@ -290,6 +320,7 @@ export async function createReservation({
     uid,
     workshopId,
     participant,
+    seats,
     policyAcceptance,
   });
 }

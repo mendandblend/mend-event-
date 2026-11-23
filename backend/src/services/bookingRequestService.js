@@ -314,8 +314,9 @@ export async function decideBookingRequestWithDatabase({
     if (targetStart !== null && targetStart <= now.toMillis()) {
       throw new BookingError(409, "The selected session has already started or passed.");
     }
-    if (countActiveBookings(activeReads, now) >= target.capacity) {
-      throw new BookingError(409, "The selected session is fully booked.");
+    const bookingSeats = Number(booking.seats) || 1;
+    if (countActiveBookings(activeReads, now) + bookingSeats > target.capacity) {
+      throw new BookingError(409, "The selected session does not have enough seats available.");
     }
     if (
       newLimitId !== booking.limitId &&

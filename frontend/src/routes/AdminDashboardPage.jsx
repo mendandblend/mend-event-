@@ -32,6 +32,7 @@ function exportRegistrations(registrations) {
     "Email",
     "Phone",
     "Event",
+    "Seats",
     "Session date",
     "Start time",
     "End time",
@@ -48,6 +49,7 @@ function exportRegistrations(registrations) {
     registration.email,
     registration.phone,
     registration.workshopName,
+    registration.seats || 1,
     registration.sessionDate,
     registration.start,
     registration.end,
@@ -414,7 +416,14 @@ export default function AdminDashboardPage() {
                     return (
                       <tr key={registration.bookingId} className="transition-colors hover:bg-brand-ivory/60 dark:hover:bg-white/5">
                         <td className="px-4 py-4">
-                          <p className="font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-brand-blue dark:text-[#96B7DA]">{registration.customerName || "—"}</p>
+                            {registration.seats && registration.seats > 1 ? (
+                              <span className="rounded-full bg-brand-blue/15 px-2 py-0.5 text-xs font-semibold text-brand-blue dark:bg-[#96B7DA]/20 dark:text-[#96B7DA]">
+                                {registration.seats} seats
+                              </span>
+                            ) : null}
+                          </div>
                           <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.email}</p>
                           <p className="mt-1 text-xs text-charcoal/65 dark:text-[#9DA7AE]">{registration.phone}</p>
                         </td>
@@ -538,6 +547,7 @@ export default function AdminDashboardPage() {
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Phone</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.phone || "—"}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Booking ID</dt><dd className="mt-0.5 break-all dark:text-[#E8ECEF]">{selectedRegistration.bookingId}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Event</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.workshopName}</dd></div>
+                  <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Seats</dt><dd className="mt-0.5 font-semibold text-brand-blue dark:text-[#96B7DA]">{selectedRegistration.seats || 1}</dd></div>
                   <div><dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Event date and time</dt><dd className="mt-0.5 dark:text-[#E8ECEF]">{selectedRegistration.sessionDate ? `${formatWorkshopDate(selectedRegistration.sessionDate)} · ${selectedRegistration.start}–${selectedRegistration.end}` : "—"}</dd></div>
                   <div>
                     <dt className="text-xs font-semibold uppercase tracking-wider text-sage-dark dark:text-sage">Registration status</dt>

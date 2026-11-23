@@ -42,6 +42,7 @@ export async function downloadTicket(ticket, fallbackName) {
   const pageWidth = 148;
   const pageHeight = 210;
   const valid = ticket.isValid === true && ticket.status === "valid";
+  const seats = Number(ticket.seats) || 1;
   const customerName = ticket.customerName || fallbackName || "Guest";
   const workshopName = ticket.workshopName || "Workshop";
   const time = [ticket.start, ticket.end].filter(Boolean).join(" - ") || "Time to be confirmed";
@@ -75,7 +76,7 @@ export async function downloadTicket(ticket, fallbackName) {
   pdf.setTextColor(...colors.muted);
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(7);
-  pdf.text("TICKET HOLDER", 16, 65);
+  pdf.text(seats > 1 ? `TICKET HOLDER (${seats} SEATS)` : "TICKET HOLDER", 16, 65);
   pdf.setTextColor(...colors.blue);
   pdf.setFont("times", "bold");
   pdf.setFontSize(18);

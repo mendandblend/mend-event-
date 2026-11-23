@@ -64,10 +64,18 @@ export function createBookingsRouter({
       policyVersion: req.body?.policyVersion,
     });
 
+    const rawSeats = req.body?.seats;
+    const seats =
+      rawSeats !== undefined && rawSeats !== null ? Number(rawSeats) : 1;
+    if (!Number.isInteger(seats) || seats < 1 || seats > 10) {
+      throw new BookingError(400, "Please select between 1 and 10 seats.");
+    }
+
     const reservation = await services.createReservation({
       uid: req.firebaseUser.uid,
       workshopId: eventId,
       participant: validateParticipant(req.body.participant),
+      seats,
       policyAcceptance,
     });
     res.status(201).json(reservation);

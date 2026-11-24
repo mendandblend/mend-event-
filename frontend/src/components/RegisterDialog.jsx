@@ -9,7 +9,8 @@ import Button from "./ui/Button.jsx";
 
 export default function RegisterDialog({ workshop, user, onClose, onReserved }) {
   const ref = useRef(null);
-  const checkoutDialogCloseRef = useRef(false);
+  const [isCheckoutActive, setIsCheckoutActive] = useState(false);
+  const isCheckoutActiveRef = useRef(false);
   const [activeWorkshop, setActiveWorkshop] = useState(workshop);
   const [isClosing, setIsClosing] = useState(false);
   const [participant, setParticipant] = useState({ fullName: "", email: "", phone: "" });
@@ -65,25 +66,25 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
   }, [isClosing, onClose]);
 
   function closeDialogForCheckout() {
-    checkoutDialogCloseRef.current = true;
+    isCheckoutActiveRef.current = true;
+    setIsCheckoutActive(true);
     if (ref.current?.open) ref.current.close();
   }
 
   function restoreDialogAfterCheckout() {
-    window.requestAnimationFrame(() => {
-      if (currentWorkshop && ref.current && !ref.current.open) ref.current.showModal();
-    });
+    isCheckoutActiveRef.current = false;
+    setIsCheckoutActive(false);
   }
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (workshop && !dialog.open) {
+    if (workshop && !isCheckoutActive && !dialog.open) {
       dialog.showModal();
-    } else if (!workshop && dialog.open && !isClosing) {
+    } else if ((!workshop || isCheckoutActive) && dialog.open && !isClosing) {
       dialog.close();
     }
-  }, [workshop, isClosing]);
+  }, [workshop, isClosing, isCheckoutActive]);
 
   useEffect(() => {
     setParticipant({
@@ -282,7 +283,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
       closeDialogForCheckout();
       checkout.open();
     } catch (paymentError) {
-      if (checkoutDialogCloseRef.current) restoreDialogAfterCheckout();
+      restoreDialogAfterCheckout();
       setError(paymentError.message || "Could not start Razorpay Checkout.");
     } finally {
       setSubmitting(false);
@@ -337,8 +338,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
         handleClose();
       }}
       onClose={() => {
-        if (checkoutDialogCloseRef.current) {
-          checkoutDialogCloseRef.current = false;
+        if (isCheckoutActiveRef.current) {
           return;
         }
         handleClose();

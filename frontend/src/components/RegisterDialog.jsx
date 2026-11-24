@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { bookingApi, formatWorkshopDate } from "../booking/api.js";
 import { validateCheckoutOrder } from "../booking/checkoutOrder.js";
@@ -10,6 +10,8 @@ import Button from "./ui/Button.jsx";
 export default function RegisterDialog({ workshop, user, onClose, onReserved }) {
   const ref = useRef(null);
   const checkoutDialogCloseRef = useRef(false);
+  const [activeWorkshop, setActiveWorkshop] = useState(workshop);
+  const [isClosing, setIsClosing] = useState(false);
   const [participant, setParticipant] = useState({ fullName: "", email: "", phone: "" });
   const [seats, setSeats] = useState(1);
   const [reservation, setReservation] = useState(null);
@@ -23,16 +25,17 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
     paymentMessage,
   );
 
-  const initialSeatsRef = useRef(workshop?.availableSeats ?? 0);
+  const currentWorkshop = workshop || activeWorkshop;
+  const initialSeatsRef = useRef(currentWorkshop?.availableSeats ?? 0);
   useEffect(() => {
-    if (workshop?.id) {
-      initialSeatsRef.current = workshop.availableSeats ?? 0;
+    if (currentWorkshop?.id) {
+      initialSeatsRef.current = currentWorkshop.availableSeats ?? 0;
     }
-  }, [workshop?.id]);
+  }, [currentWorkshop?.id]);
 
   const hasHeldOrConfirmedSeat = Boolean(reservation || paymentConfirmed);
   const bookedSeatsCount = Number(reservation?.seats) || seats;
-  const baseSeats = typeof workshop?.availableSeats === "number" ? workshop.availableSeats : 0;
+  const baseSeats = typeof currentWorkshop?.availableSeats === "number" ? currentWorkshop.availableSeats : 0;
   const displayedSeats = Math.max(
     0,
     hasHeldOrConfirmedSeat
@@ -43,6 +46,24 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
   );
   const maxSelectableSeats = Math.max(1, Math.min(10, baseSeats));
 
+  useEffect(() => {
+    if (workshop) {
+      setActiveWorkshop(workshop);
+      setIsClosing(false);
+    }
+  }, [workshop]);
+
+  const handleClose = useCallback(() => {
+    if (isClosing) return;
+    setIsClosing(true);
+    setTimeout(() => {
+      setIsClosing(false);
+      const dialog = ref.current;
+      if (dialog?.open) dialog.close();
+      onClose();
+    }, 200);
+  }, [isClosing, onClose]);
+
   function closeDialogForCheckout() {
     checkoutDialogCloseRef.current = true;
     if (ref.current?.open) ref.current.close();
@@ -50,16 +71,19 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
 
   function restoreDialogAfterCheckout() {
     window.requestAnimationFrame(() => {
-      if (workshop && ref.current && !ref.current.open) ref.current.showModal();
+      if (currentWorkshop && ref.current && !ref.current.open) ref.current.showModal();
     });
   }
 
   useEffect(() => {
     const dialog = ref.current;
     if (!dialog) return;
-    if (workshop && !dialog.open) dialog.showModal();
-    if (!workshop && dialog.open) dialog.close();
-  }, [workshop]);
+    if (workshop && !dialog.open) {
+      dialog.showModal();
+    } else if (!workshop && dialog.open && !isClosing) {
+      dialog.close();
+    }
+  }, [workshop, isClosing]);
 
   useEffect(() => {
     setParticipant({
@@ -104,7 +128,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
       const result = await bookingApi("/bookings/reservations", user, {
         method: "POST",
         body: JSON.stringify({
-          eventId: workshop.id,
+          eventId: currentWorkshop.id,
           participant,
           seats,
           policyAccepted: true,
@@ -308,34 +332,42 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
     <dialog
       ref={ref}
       aria-labelledby="register-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        handleClose();
+      }}
       onClose={() => {
         if (checkoutDialogCloseRef.current) {
           checkoutDialogCloseRef.current = false;
           return;
         }
-        onClose();
+        handleClose();
       }}
       onClick={(event) => {
-        if (event.target === ref.current) onClose();
+        if (event.target === ref.current) handleClose();
       }}
-      className="m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[34rem] overflow-y-auto rounded-3xl border border-sage/45 border-t-4 border-t-terracotta bg-brand-ivory p-0 text-charcoal shadow-2xl backdrop:bg-charcoal/55 backdrop:backdrop-blur-xs dark:border-white/15 dark:border-t-terracotta dark:bg-[#21292E] dark:text-brand-ivory dark:backdrop:bg-black/70"
+      className={`m-auto max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] max-w-[34rem] overflow-y-auto rounded-3xl border border-sage/45 border-t-4 border-t-terracotta bg-brand-ivory p-0 text-charcoal shadow-2xl backdrop:bg-charcoal/55 backdrop:backdrop-blur-xs dark:border-white/15 dark:border-t-terracotta dark:bg-[#21292E] dark:text-brand-ivory dark:backdrop:bg-black/70 transition-all duration-200 ease-out ${
+        isClosing
+          ? "opacity-0 scale-95 translate-y-1.5 pointer-events-none"
+          : "opacity-100 scale-100 translate-y-0"
+      }`}
     >
-      {workshop && (
+      {currentWorkshop && (
         <div className="p-5 sm:p-10">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-sage-dark dark:text-sage">
             <span className="h-px w-5 bg-terracotta" aria-hidden="true" />
             Reserve your place
           </p>
           <h3 id="register-title" className="mt-3 break-words text-3xl font-medium text-brand-blue dark:text-[#96B7DA]">
-            {workshop.title}
+            {currentWorkshop.title}
           </h3>
           <p className="mt-2 text-charcoal/80 dark:text-brand-ivory/80">
-            {formatWorkshopDate(workshop.date)} · {workshop.start}–{workshop.end}
+            {formatWorkshopDate(currentWorkshop.date)} · {currentWorkshop.start}–{currentWorkshop.end}
           </p>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-sage/40 bg-white p-4 shadow-xs dark:border-white/10 dark:bg-[#181E22]">
             <div className="flex items-baseline gap-2">
               <span className="text-sm text-charcoal/70 dark:text-brand-ivory/70">Session price</span>
-              <strong className="font-serif text-2xl font-semibold text-brand-blue dark:text-[#96B7DA]">{formatINR(workshop.price)}</strong>
+              <strong className="font-serif text-2xl font-semibold text-brand-blue dark:text-[#96B7DA]">{formatINR(currentWorkshop.price)}</strong>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm text-charcoal/70 dark:text-brand-ivory/70">Available seats</span>
@@ -353,7 +385,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                     Number of seats
                   </span>
                   <span className="text-xs text-charcoal/65 dark:text-brand-ivory/60">
-                    {formatINR(workshop.price)} per attendee
+                    {formatINR(currentWorkshop.price)} per attendee
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -386,7 +418,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                     Total for {seats} seats
                   </span>
                   <span className="font-serif text-base font-bold text-brand-blue dark:text-[#96B7DA]">
-                    {formatINR(workshop.price * seats)}
+                    {formatINR(currentWorkshop.price * seats)}
                   </span>
                 </div>
               )}
@@ -442,7 +474,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                     {submitting ? "Opening checkout…" : `Pay ${formatINR(reservation.amount)}`}
                   </Button>
                 )}
-                <Button variant="secondary" onClick={onClose}>Close</Button>
+                <Button variant="secondary" onClick={handleClose}>Close</Button>
               </div>
             </div>
           ) : !user ? (
@@ -459,7 +491,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                 >
                   Sign in with Google
                 </Link>
-                <Button variant="secondary" onClick={onClose}>Close</Button>
+                <Button variant="secondary" onClick={handleClose}>Close</Button>
               </div>
             </>
           ) : (
@@ -555,7 +587,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
                 <Button type="submit" variant="accent" disabled={submitting || displayedSeats === 0 || seats > displayedSeats}>
                   {submitting ? "Reserving…" : seats > 1 ? `Reserve ${seats} seats` : "Reserve seat"}
                 </Button>
-                <Button variant="secondary" onClick={onClose}>Cancel</Button>
+                <Button variant="secondary" onClick={handleClose}>Cancel</Button>
               </div>
             </form>
           )}

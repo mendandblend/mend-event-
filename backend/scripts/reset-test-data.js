@@ -12,6 +12,7 @@ async function resetTestData() {
     "tickets",
     "bookingRequests",
     "policyAcceptances",
+    "razorpayWebhookEvents",
   ];
 
   let totalDeleted = 0;

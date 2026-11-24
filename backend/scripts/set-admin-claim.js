@@ -2,21 +2,26 @@ import "../src/loadEnv.js";
 import { getAuth } from "firebase-admin/auth";
 import { getFirebaseAdminApp } from "../src/firebaseAdmin.js";
 
-const uid = process.argv[2]?.trim();
-if (!uid) {
-  console.error("Usage: node scripts/set-admin-claim.js <firebase-user-uid>");
+const identifier = process.argv[2]?.trim();
+const role = process.argv[3]?.trim() || "super_admin";
+
+if (!identifier) {
+  console.error("Usage: node scripts/set-admin-claim.js <email-or-uid> [super_admin|event_admin]");
   process.exitCode = 1;
 } else {
   try {
     const auth = getAuth(getFirebaseAdminApp());
-    const user = await auth.getUser(uid);
-    await auth.setCustomUserClaims(uid, {
+    const user = identifier.includes("@")
+      ? await auth.getUserByEmail(identifier)
+      : await auth.getUser(identifier);
+
+    await auth.setCustomUserClaims(user.uid, {
       ...user.customClaims,
       admin: true,
-      adminRole: user.customClaims?.adminRole || "super_admin",
+      adminRole: role,
     });
-    console.log(`Administrator claim set for Firebase user ${uid}.`);
-    console.log("The user must refresh their ID token or sign in again before accessing admin routes.");
+    console.log(`✓ Granted ${role} access to ${user.email || user.uid} (UID: ${user.uid}).`);
+    console.log("The user must sign out and sign in again (or refresh their ID token) to activate admin access.");
   } catch (error) {
     console.error("Could not grant administrator access:", error.message);
     process.exitCode = 1;

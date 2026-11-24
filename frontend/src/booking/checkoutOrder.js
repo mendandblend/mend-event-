@@ -7,7 +7,7 @@ export function validateCheckoutOrder(order, bookingId) {
     order.amount <= 0 ||
     order.currency !== "INR" ||
     typeof order.keyId !== "string" ||
-    !/^rzp_test_[A-Za-z0-9]+$/.test(order.keyId) ||
+    !/^rzp_(test|live)_[A-Za-z0-9]+$/.test(order.keyId) ||
     order.bookingId !== bookingId ||
     typeof order.expiresAt !== "string" ||
     !Number.isFinite(Date.parse(order.expiresAt))

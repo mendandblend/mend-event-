@@ -49,8 +49,8 @@ export default function About() {
     <Section
       id="about"
       eyebrow="About Mend and Blend"
-      title="Mend what feels worn. Blend with what is real."
-      intro="Our workshops invite you to explore the mind with curiosity instead of pressure. To mend is to tend to yourself with care. To blend is to bring all your parts, and the people around you, into the same room."
+      title="Mind your thought, Blend your perspective"
+      intro="Mend and Blend is an invitation to pause, explore and rediscover the many layers of being human. It’s about finding meaning in our experiences, making space for different perspectives and bringing together creativity, individuality and connection. We believe every person has a story unfolding, and every experience offers a chance to see life a little differently."
       className="bg-about-atmosphere border-t border-sage/30 dark:border-white/10"
       decorations={
         <svg

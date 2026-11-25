@@ -31,7 +31,8 @@ export const FOUNDERS = [
     role: "Co-founder",
     qualifications: [
       "BSc Psychology",
-      "Master of Social Work (MSW)",
+      "MSW specialised in Medical & Psychiatry",
+      "MSc Counselling Psychology",
     ],
     tone: "bg-brand-blue text-white ring-4 ring-gold/30 dark:bg-[#5B81A8] dark:ring-gold/25",
   },
@@ -41,8 +42,7 @@ export const FOUNDERS = [
     role: "Co-founder",
     qualifications: [
       "BSc Psychology",
-      "MSW specialised in Medical & Psychiatry",
-      "MSc Counselling Psychology",
+      "Master of Social Work (MSW)",
     ],
     tone: "bg-terracotta-dark text-white ring-4 ring-sage/40 dark:bg-terracotta dark:text-[#1B2226] dark:ring-sage/30",
   },

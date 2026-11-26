@@ -27,11 +27,14 @@ export default function Workshops() {
     setError("");
     try {
       const result = await bookingApi("/events");
-      setWorkshops(result.workshops);
-      setDates(result.dates);
+      const activeWorkshops = (result.workshops || []).filter(
+        (w) => Number(w.price) > 1 && !/\(copy\)/i.test(w.title || ""),
+      );
+      setWorkshops(activeWorkshops);
+      setDates(result.dates || []);
       setSelected((prev) => {
         if (!prev) return null;
-        const fresh = result.workshops?.find((w) => w.id === prev.id);
+        const fresh = activeWorkshops.find((w) => w.id === prev.id);
         return fresh || prev;
       });
     } catch (loadError) {

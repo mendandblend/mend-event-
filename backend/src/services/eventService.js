@@ -213,6 +213,9 @@ export function serializeEvent(event, now = Date.now(), availableSeats = event.c
 }
 
 export function isPublicEvent(event) {
+  if (event == null) return false;
+  if (event.price != null && Number(event.price) <= 1) return false;
+  if (typeof event.title === "string" && event.title.toLowerCase().includes("(copy)")) return false;
   return event.published === true &&
     (event.status == null || event.status === "published");
 }

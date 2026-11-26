@@ -1,4 +1,4 @@
-import { StrictMode, useEffect } from "react";
+import { lazy, StrictMode, Suspense, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider } from "./auth/AuthContext.jsx";
@@ -6,14 +6,15 @@ import { ThemeProvider } from "./theme/ThemeContext.jsx";
 import "./index.css";
 import App from "./App.jsx";
 import RequireAuth from "./routes/RequireAuth.jsx";
-import LoginPage from "./routes/LoginPage.jsx";
-import MyTicketsPage from "./routes/MyTicketsPage.jsx";
-import MyReservationsPage from "./routes/MyReservationsPage.jsx";
-import NotFoundPage from "./routes/NotFoundPage.jsx";
-import PolicyPage from "./routes/PolicyPage.jsx";
-import AdminLoginPage from "./routes/AdminLoginPage.jsx";
-import AdminOnlyRoute from "./routes/AdminOnlyRoute.jsx";
-import AdminDashboardPage from "./routes/AdminDashboardPage.jsx";
+
+const LoginPage = lazy(() => import("./routes/LoginPage.jsx"));
+const MyTicketsPage = lazy(() => import("./routes/MyTicketsPage.jsx"));
+const MyReservationsPage = lazy(() => import("./routes/MyReservationsPage.jsx"));
+const NotFoundPage = lazy(() => import("./routes/NotFoundPage.jsx"));
+const PolicyPage = lazy(() => import("./routes/PolicyPage.jsx"));
+const AdminLoginPage = lazy(() => import("./routes/AdminLoginPage.jsx"));
+const AdminOnlyRoute = lazy(() => import("./routes/AdminOnlyRoute.jsx"));
+const AdminDashboardPage = lazy(() => import("./routes/AdminDashboardPage.jsx"));
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -29,45 +30,47 @@ function AnimatedRoutes() {
 
   return (
     <div key={`${location.pathname}${location.search}`} className="route-transition">
-      <Routes location={location}>
-        <Route path="/" element={<App />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/policy" element={<PolicyPage />} />
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-        <Route
-          path="/my-tickets"
-          element={
-            <RequireAuth>
-              <MyTicketsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/my-reservations"
-          element={
-            <RequireAuth>
-              <MyReservationsPage />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <AdminOnlyRoute>
-              <AdminDashboardPage />
-            </AdminOnlyRoute>
-          }
-        />
-        <Route
-          path="/admin/workshops"
-          element={
-            <AdminOnlyRoute>
-              <AdminDashboardPage />
-            </AdminOnlyRoute>
-          }
-        />
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
+      <Suspense fallback={<p className="p-8 text-center" role="status">Loading…</p>}>
+        <Routes location={location}>
+          <Route path="/" element={<App />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/policy" element={<PolicyPage />} />
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/my-tickets"
+            element={
+              <RequireAuth>
+                <MyTicketsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/my-reservations"
+            element={
+              <RequireAuth>
+                <MyReservationsPage />
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <AdminOnlyRoute>
+                <AdminDashboardPage />
+              </AdminOnlyRoute>
+            }
+          />
+          <Route
+            path="/admin/workshops"
+            element={
+              <AdminOnlyRoute>
+                <AdminDashboardPage />
+              </AdminOnlyRoute>
+            }
+          />
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </div>
   );
 }

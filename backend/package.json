@@ -12,7 +12,6 @@
     "start": "node src/server.js",
     "test": "node --test",
     "diagnose:firebase": "node scripts/check-firebase-admin.js",
-    "reset:data": "node scripts/reset-test-data.js",
     "admin:grant": "node scripts/set-admin-claim.js"
   },
   "dependencies": {

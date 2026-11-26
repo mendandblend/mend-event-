@@ -5,7 +5,7 @@ import logo from "../assets/logo.jpg";
 const VALUES = [
   {
     title: "Self-discovery",
-    text: "Notice what you need, what you carry and what you're ready to let go of.",
+    text: "Outgrowing the version of me that needed everyone's approval.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="12" cy="12" r="9" />
@@ -15,7 +15,7 @@ const VALUES = [
   },
   {
     title: "Emotional wellness",
-    text: "Make room for feelings without judging them or rushing past them.",
+    text: "Giving your feelings room to breathe without letting them take the wheel.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="M12 20.5s-7-4.35-7-10A4.25 4.25 0 0 1 12 7.4a4.25 4.25 0 0 1 7 3.1c0 5.65-7 10-7 10Z" />
@@ -34,7 +34,7 @@ const VALUES = [
   },
   {
     title: "Human connection",
-    text: "Be heard, and hear others, in a room built for honest conversation.",
+    text: "Listen inward to heal; grow outward to connect.",
     icon: (
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <circle cx="9" cy="12" r="5" />

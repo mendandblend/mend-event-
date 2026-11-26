@@ -138,7 +138,9 @@ export default function MyReservationsPage() {
       setNotice(
         verified.bookingStatus === "confirmed" || verified.paymentStatus === "captured"
           ? "Payment verified. Your booking is confirmed."
-          : "Payment is processing. Check your reservation status again shortly.",
+          : verified.paymentStatus === "refund_required"
+            ? "Payment was captured after the reservation expired, so the booking was not confirmed. Please contact Mend and Blend to arrange a refund."
+            : "Payment is processing. Check your reservation status again shortly.",
       );
     } catch (verificationError) {
       try {
@@ -149,8 +151,10 @@ export default function MyReservationsPage() {
         setNotice(
           status.bookingStatus === "confirmed" || status.paymentStatus === "captured"
             ? "Payment verified. Your booking is confirmed."
-            : "Payment status is " +
-              `${status.paymentStatus.replaceAll("_", " ")}. Do not pay again while it is processing.`,
+            : status.paymentStatus === "refund_required"
+              ? "Payment was captured after the reservation expired, so the booking was not confirmed. Please contact Mend and Blend to arrange a refund."
+              : "Payment status is " +
+                `${status.paymentStatus.replaceAll("_", " ")}. Do not pay again while it is processing.`,
         );
       } catch {
         setError(

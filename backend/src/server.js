@@ -12,6 +12,9 @@ import {
 } from "./firebaseAdminDiagnostics.js";
 
 const app = express();
+// Trust the single reverse proxy hop (e.g. Hostinger) so req.ip reflects the
+// real client IP without allowing arbitrary X-Forwarded-For spoofing.
+app.set("trust proxy", 1);
 const PORT = process.env.PORT || 5000;
 
 app.use(cors(createCorsOptions()));
@@ -82,10 +85,9 @@ app.use((error, req, res, next) => {
 app.listen(PORT, () => {
   console.log(`Backend running on http://localhost:${PORT}`);
   console.log(
-    `[Firebase Admin] Project ID configured: ${Boolean(process.env.FIREBASE_PROJECT_ID?.trim())}; credential source: ${
-      process.env.GOOGLE_APPLICATION_CREDENTIALS
-        ? "GOOGLE_APPLICATION_CREDENTIALS"
-        : "Application Default Credentials"
+    `[Firebase Admin] Project ID configured: ${Boolean(process.env.FIREBASE_PROJECT_ID?.trim())}; credential source: ${process.env.GOOGLE_APPLICATION_CREDENTIALS
+      ? "GOOGLE_APPLICATION_CREDENTIALS"
+      : "Application Default Credentials"
     }; Firestore connectivity not checked at startup (run "npm run diagnose:firebase").`,
   );
 });

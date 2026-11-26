@@ -264,3 +264,86 @@ export async function redeemTicket(qrToken, adminUid) {
     };
   });
 }
+
+export async function resetTestDataAndCleanup() {
+  const db = getDatabase();
+
+  const collectionsToClear = [
+    "bookings",
+    "bookingLimits",
+    "payments",
+    "tickets",
+    "bookingRequests",
+    "policyAcceptances",
+    "razorpayWebhookEvents",
+  ];
+
+  const deletionSummary = {};
+  let totalDeleted = 0;
+
+  for (const collectionName of collectionsToClear) {
+    const snapshot = await db.collection(collectionName).get();
+    if (snapshot.empty) {
+      deletionSummary[collectionName] = 0;
+      continue;
+    }
+
+    const batch = db.batch();
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+    }
+    await batch.commit();
+    deletionSummary[collectionName] = snapshot.size;
+    totalDeleted += snapshot.size;
+  }
+
+  const workshopsSnapshot = await db.collection("workshops").get();
+  const workshopBatch = db.batch();
+  const deletedEvents = [];
+  const resetEvents = [];
+
+  for (const doc of workshopsSnapshot.docs) {
+    const data = doc.data();
+    const price = Number(data.price);
+    const title = (data.title || "").toLowerCase();
+    const id = (doc.id || "").toLowerCase();
+
+    // Identify 1-rupee test / example / copy event
+    const isOneRupeeTestEvent =
+      price === 1 ||
+      (price > 0 && price <= 5) ||
+      title.includes("1 rupee") ||
+      title.includes("(copy)") ||
+      id.includes("copy") ||
+      title.includes("test");
+
+    if (isOneRupeeTestEvent) {
+      workshopBatch.delete(doc.ref);
+      deletedEvents.push({ id: doc.id, title: data.title, price: data.price });
+    } else {
+      const capacity = Number(data.capacity) || 12;
+      workshopBatch.update(doc.ref, {
+        reservationVersion: 0,
+        bookedSeats: 0,
+        availableSeats: capacity,
+        salesPaused: false,
+        registrationClosedManually: false,
+        status: "published",
+        published: true,
+      });
+      resetEvents.push({ id: doc.id, title: data.title, availableSeats: capacity });
+    }
+  }
+
+  await workshopBatch.commit();
+
+  return {
+    success: true,
+    totalDeleted,
+    deletedCollections: deletionSummary,
+    deletedEvents,
+    resetEventsCount: resetEvents.length,
+    resetEvents,
+    message: `Reset complete. Deleted ${totalDeleted} test documents, removed ${deletedEvents.length} test event(s), and emptied seats on ${resetEvents.length} event(s). Ready for live execution.`,
+  };
+}

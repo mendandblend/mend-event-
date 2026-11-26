@@ -94,6 +94,8 @@ export default function AdminDashboardPage() {
   const [scanToken, setScanToken] = useState("");
   const [scanResult, setScanResult] = useState(null);
   const [verifyingScan, setVerifyingScan] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetFeedback, setResetFeedback] = useState("");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState(
     () => window.location.hash.slice(1) || "overview",
@@ -190,6 +192,35 @@ export default function AdminDashboardPage() {
     await redeemScannedTicket(scanToken.trim());
   }
 
+  async function handleResetTestData() {
+    if (
+      !window.confirm(
+        "Are you sure you want to reset all test data? This will:\n\n" +
+          "• Delete all test bookings, payments, and tickets\n" +
+          "• Empty all booked seats on active workshops\n" +
+          "• Remove the 1-rupee test / example event\n" +
+          "• Make events ready for live execution\n\n" +
+          "This action is permanent.",
+      )
+    ) {
+      return;
+    }
+    setResetting(true);
+    setError("");
+    setResetFeedback("");
+    try {
+      const res = await bookingApi("/admin/system/reset-test-data", user, {
+        method: "POST",
+      });
+      setResetFeedback(res.message || "Test data reset complete.");
+      await loadDashboard();
+    } catch (err) {
+      setError(err.message || "Could not reset test data.");
+    } finally {
+      setResetting(false);
+    }
+  }
+
   return (
     <>
       <Navbar />
@@ -207,7 +238,16 @@ export default function AdminDashboardPage() {
                 administrators cannot change payment status.
               </p>
             </div>
-            <div className="mt-7 flex items-center gap-3">
+            <div className="mt-7 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={resetting}
+                onClick={handleResetTestData}
+                className="btn-interactive inline-flex items-center gap-2 rounded-full border border-terracotta/50 bg-terracotta/10 px-4 py-2 text-xs sm:text-sm font-medium text-terracotta-dark shadow-xs hover:bg-terracotta/20 dark:border-terracotta/40 dark:bg-terracotta/15 dark:text-[#F09E88] dark:hover:bg-terracotta/25 disabled:opacity-50 transition-colors"
+              >
+                <span>🧹</span>
+                <span>{resetting ? "Resetting test data…" : "Reset test data & empty seats"}</span>
+              </button>
               <Link
                 to="/my-tickets"
                 className="inline-flex items-center gap-2 rounded-full border border-sage/60 bg-white px-4 py-2 text-xs sm:text-sm font-medium text-brand-blue shadow-xs hover:bg-brand-ivory hover:text-brand-blue-dark dark:border-white/15 dark:bg-[#21292E] dark:text-[#96B7DA] dark:hover:bg-[#2A343A] transition-colors"
@@ -217,6 +257,12 @@ export default function AdminDashboardPage() {
               </Link>
             </div>
           </header>
+
+          {resetFeedback && (
+            <p className="mt-6 rounded-2xl border border-sage/60 bg-sage/20 p-4 text-sm text-charcoal dark:border-sage/45 dark:bg-sage/15 dark:text-[#E8ECEF]" role="status">
+              {resetFeedback}
+            </p>
+          )}
 
           {error && (
             <p className="mt-6 rounded-2xl border border-terracotta/50 bg-terracotta/10 p-4 text-sm text-terracotta-dark dark:border-terracotta/45 dark:bg-terracotta/15 dark:text-[#F09E88]" role="alert">

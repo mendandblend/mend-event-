@@ -10,7 +10,11 @@ import {
   classifyFirebaseAdminError,
   logFirebaseAdminError,
 } from "../firebaseAdminDiagnostics.js";
-import { getAdminDashboard, redeemTicket } from "../services/adminService.js";
+import {
+  getAdminDashboard,
+  redeemTicket,
+  resetTestDataAndCleanup,
+} from "../services/adminService.js";
 import {
   decideBookingRequest,
   listAdminRequests,
@@ -145,6 +149,20 @@ router.delete(
   requireAdmin,
   async (req, res) => {
     return res.json(await deleteManagedEvent(req.params.eventId));
+  },
+);
+
+router.post(
+  "/system/reset-test-data",
+  requireFirebaseUser,
+  requireAdmin,
+  async (req, res) => {
+    try {
+      const result = await resetTestDataAndCleanup();
+      return res.json(result);
+    } catch (error) {
+      return res.status(500).json({ error: error.message || "Failed to reset test data." });
+    }
   },
 );
 

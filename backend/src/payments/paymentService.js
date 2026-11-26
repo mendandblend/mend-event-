@@ -139,7 +139,6 @@ export async function createPaymentOrder(uid, bookingId) {
         : null);
     const checkoutExpiryMillis = Math.min(
       checkoutExpiry.toMillis(),
-      booking.expiresAt.toMillis(),
       registrationCloseMillis ?? Number.POSITIVE_INFINITY,
     );
     if (checkoutExpiryMillis <= now.toMillis()) {

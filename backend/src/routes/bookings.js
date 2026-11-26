@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { rateLimit } from "express-rate-limit";
 import { requireFirebaseUser } from "../auth/firebaseAuth.js";
 import {
   BookingError,
@@ -45,11 +46,20 @@ export function createBookingsRouter({
 } = {}) {
   const router = Router();
 
+  // Per signed-in user: at most 5 reservation attempts every 30 minutes.
+  const reservationLimiter = rateLimit({
+    windowMs: 30 * 60 * 1000,
+    limit: 5,
+    keyGenerator: (req) => req.firebaseUser?.uid || req.ip,
+    validate: { keyGeneratorIpFallback: false },
+    message: { error: "Too many reservation attempts. Please try again later." },
+  });
+
   router.get("/mine", auth, async (req, res) => {
     res.json({ bookings: await services.listCustomerBookings(req.firebaseUser.uid) });
   });
 
-  router.post("/reservations", auth, async (req, res) => {
+  router.post("/reservations", auth, reservationLimiter, async (req, res) => {
     const eventId = req.body?.eventId ?? req.body?.workshopId;
     if (
       typeof eventId !== "string" ||

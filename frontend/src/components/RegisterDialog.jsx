@@ -217,6 +217,15 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
       const order = validateCheckoutOrder(orderResponse, reservation.bookingId);
       setReservation((current) => ({ ...current, expiresAt: order.expiresAt }));
       await loadRazorpayCheckout();
+      const holdSecondsRemaining = Math.floor(
+        (new Date(order.expiresAt).getTime() - Date.now()) / 1000,
+      );
+      if (holdSecondsRemaining <= 0) {
+        setError("This reservation hold has expired. Please reserve a seat again.");
+        return;
+      }
+
+      let paymentHandled = false;
       const checkout = new window.Razorpay({
         key: order.keyId,
         amount: order.amount,
@@ -224,15 +233,18 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
         name: "Mend and Blend",
         description: `${reservation.workshopName} (${reservation.seats || 1} ${(reservation.seats || 1) === 1 ? "seat" : "seats"})`,
         order_id: order.orderId,
+        // Close Checkout when the seat hold ends (if at least 60s remain)
+        ...(holdSecondsRemaining >= 60 ? { timeout: holdSecondsRemaining } : {}),
         prefill: {
           name: participant.fullName,
           email: participant.email,
-          contact: participant.phone,
+          contact: participant.phone?.replace(/[^\d+]/g, "") || participant.phone,
         },
         notes: { bookingId: reservation.bookingId },
         theme: { color: "#405F80" },
         modal: {
           ondismiss: async () => {
+            if (paymentHandled) return;
             try {
               const status = await bookingApi(
                 `/payments/${encodeURIComponent(reservation.bookingId)}/cancel`,
@@ -259,6 +271,7 @@ export default function RegisterDialog({ workshop, user, onClose, onReserved }) 
           },
         },
         handler: async (result) => {
+          paymentHandled = true;
           try {
             await completeCheckout(result);
           } finally {

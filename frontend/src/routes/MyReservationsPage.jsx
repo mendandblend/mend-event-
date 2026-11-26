@@ -179,6 +179,16 @@ export default function MyReservationsPage() {
       }
       const order = validateCheckoutOrder(response, reservation.id);
       await loadRazorpayCheckout();
+      const holdSecondsRemaining = Math.floor(
+        (new Date(order.expiresAt).getTime() - Date.now()) / 1000,
+      );
+      if (holdSecondsRemaining <= 0) {
+        setError("This reservation hold has expired. Please reserve a seat again.");
+        await loadReservations();
+        return;
+      }
+
+      let paymentHandled = false;
       const checkout = new window.Razorpay({
         key: order.keyId,
         amount: order.amount,
@@ -186,15 +196,18 @@ export default function MyReservationsPage() {
         name: "Mend and Blend",
         description: `${reservation.workshopName || "Workshop"} workshop`,
         order_id: order.orderId,
+        // Close Checkout when the seat hold ends (if at least 60s remain)
+        ...(holdSecondsRemaining >= 60 ? { timeout: holdSecondsRemaining } : {}),
         prefill: {
           name: reservation.participant?.fullName || "",
           email: reservation.participant?.email || user.email || "",
-          contact: reservation.participant?.phone || "",
+          contact: reservation.participant?.phone?.replace(/[^\d+]/g, "") || "",
         },
         notes: { bookingId: reservation.id },
         theme: { color: "#405F80" },
         modal: {
           ondismiss: async () => {
+            if (paymentHandled) return;
             try {
               const status = await bookingApi(
                 `/payments/${encodeURIComponent(reservation.id)}/cancel`,
@@ -214,7 +227,10 @@ export default function MyReservationsPage() {
             }
           },
         },
-        handler: (result) => handlePaymentResult(reservation, result),
+        handler: (result) => {
+          paymentHandled = true;
+          handlePaymentResult(reservation, result);
+        },
       });
       checkout.on("payment.failed", async (failure) => {
         const failureMessage = failure.error?.description?.trim();

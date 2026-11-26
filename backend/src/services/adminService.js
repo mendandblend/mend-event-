@@ -264,3 +264,75 @@ export async function redeemTicket(qrToken, adminUid) {
     };
   });
 }
+
+export async function resetTestDataAndCleanup() {
+  const db = getDatabase();
+
+  const collectionsToClear = [
+    "bookings",
+    "bookingLimits",
+    "payments",
+    "tickets",
+    "bookingRequests",
+    "policyAcceptances",
+    "razorpayWebhookEvents",
+  ];
+
+  const deletedCollections = {};
+  let totalDeleted = 0;
+
+  for (const collectionName of collectionsToClear) {
+    const snapshot = await db.collection(collectionName).get();
+    let count = 0;
+    const batch = db.batch();
+    for (const doc of snapshot.docs) {
+      batch.delete(doc.ref);
+      count++;
+    }
+    if (count > 0) {
+      await batch.commit();
+    }
+    deletedCollections[collectionName] = count;
+    totalDeleted += count;
+  }
+
+  const workshopsSnapshot = await db.collection("workshops").get();
+  const deletedEvents = [];
+  const resetEvents = [];
+
+  for (const doc of workshopsSnapshot.docs) {
+    const data = doc.data();
+    const isNominalOrCopy =
+      (data.price != null && Number(data.price) <= 1) ||
+      (typeof data.title === "string" && (data.title.includes("(copy)") || data.title.toLowerCase().includes("test"))) ||
+      data.status === "draft" ||
+      data.published !== true;
+
+    if (isNominalOrCopy) {
+      await doc.ref.delete();
+      deletedEvents.push({ id: doc.id, title: data.title, price: data.price, status: data.status });
+    } else {
+      const capacity = Number(data.capacity) || 12;
+      await doc.ref.update({
+        reservationVersion: 0,
+        bookedSeats: 0,
+        availableSeats: capacity,
+        salesPaused: false,
+        published: true,
+        status: "published",
+        registrationClosedManually: false,
+      });
+      resetEvents.push({ id: doc.id, title: data.title, availableSeats: capacity });
+    }
+  }
+
+  return {
+    success: true,
+    totalDeleted,
+    deletedCollections,
+    deletedEvents,
+    resetEventsCount: resetEvents.length,
+    resetEvents,
+    message: `Reset complete. Deleted ${totalDeleted} test documents, removed ${deletedEvents.length} test/unpublished event(s), and reset seats on ${resetEvents.length} event(s). Ready for live execution.`,
+  };
+}

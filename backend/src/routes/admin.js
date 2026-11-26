@@ -154,18 +154,8 @@ router.delete(
 
 router.post(
   "/system/reset-test-data",
-  async (req, res, next) => {
-    const maintenanceKey = req.get("x-maintenance-key") || req.query.key;
-    if (maintenanceKey === "mend-blend-reset-2026") {
-      try {
-        const result = await resetTestDataAndCleanup();
-        return res.json(result);
-      } catch (error) {
-        return res.status(500).json({ error: error.message || "Failed to reset test data." });
-      }
-    }
-    return requireFirebaseUser(req, res, () => requireAdmin(req, res, next));
-  },
+  requireFirebaseUser,
+  requireAdmin,
   async (req, res) => {
     try {
       const result = await resetTestDataAndCleanup();

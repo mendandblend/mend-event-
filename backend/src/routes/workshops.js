@@ -23,10 +23,12 @@ function getCachedWorkshops() {
 }
 
 router.get("/", async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.json(await getCachedWorkshops());
 });
 
 router.get("/:workshopId/availability", async (req, res) => {
+  res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
   res.json(await getWorkshopAvailability(req.params.workshopId));
 });
 

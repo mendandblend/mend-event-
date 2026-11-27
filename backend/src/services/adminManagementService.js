@@ -67,16 +67,19 @@ export async function addAdministrator({ email, role }) {
     user = await auth.getUserByEmail(normalizedEmail);
   } catch (error) {
     if (error.code === "auth/user-not-found") {
-      throw managementError(
-        404,
-        "That account is not registered yet. Ask the person to sign in with Google once, then add them.",
-      );
+      user = await auth.createUser({
+        email: normalizedEmail,
+        emailVerified: true,
+      });
+    } else {
+      throw error;
     }
-    throw error;
   }
 
   if (adminRole(user)) {
-    throw managementError(409, "This account is already an administrator.");
+    if (adminRole(user) === role) {
+      return publicAdmin(user);
+    }
   }
 
   const adminAddedAt = new Date().toISOString();

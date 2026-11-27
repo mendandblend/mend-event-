@@ -11,9 +11,22 @@ if (!identifier) {
 } else {
   try {
     const auth = getAuth(getFirebaseAdminApp());
-    const user = identifier.includes("@")
-      ? await auth.getUserByEmail(identifier)
-      : await auth.getUser(identifier);
+    let user;
+    try {
+      user = identifier.includes("@")
+        ? await auth.getUserByEmail(identifier)
+        : await auth.getUser(identifier);
+    } catch (error) {
+      if (error.code === "auth/user-not-found" && identifier.includes("@")) {
+        console.log(`User ${identifier} not found in Firebase. Creating pre-registered account...`);
+        user = await auth.createUser({
+          email: identifier,
+          emailVerified: true,
+        });
+      } else {
+        throw error;
+      }
+    }
 
     await auth.setCustomUserClaims(user.uid, {
       ...user.customClaims,

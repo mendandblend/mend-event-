@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import logo from "../assets/logo.jpg";
 import logoTrace from "../assets/logoTrace.json";
 
-const INTRO_DURATION = 2800;
+const INTRO_DURATION = 1500;
 const INTRO_SEEN_KEY = "mend-and-blend-logo-intro-seen";
 let introShownThisTab = false;
 

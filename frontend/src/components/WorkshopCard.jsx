@@ -74,6 +74,7 @@ export default function WorkshopCard({ workshop, dateLabel, onRegister }) {
             src={poster}
             alt={`${title} event poster`}
             loading="lazy"
+            decoding="async"
             referrerPolicy="no-referrer"
             className={`image-frame__img aspect-[4/5] w-full object-cover transition-transform duration-300 ${
               workshop.canRegister

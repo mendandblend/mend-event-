@@ -717,7 +717,7 @@ html.dark .bg-contact-atmosphere::after {
   overflow: hidden;
   background: #416187;
   pointer-events: none;
-  animation: logo-intro-exit 480ms ease-in-out 2.25s forwards;
+  animation: logo-intro-exit 257ms ease-in-out 1205ms forwards;
 }
 
 .logo-intro__artwork {
@@ -739,40 +739,40 @@ html.dark .bg-contact-atmosphere::after {
 
 .logo-intro__upper-hand path {
   stroke-width: 11;
-  animation: logo-stroke-draw 880ms ease-in-out 80ms forwards;
+  animation: logo-stroke-draw 471ms ease-in-out 43ms forwards;
 }
 
 .logo-intro__upper-hand path:not(:first-child) {
-  animation: logo-stroke-draw 650ms ease-in-out 280ms forwards;
+  animation: logo-stroke-draw 348ms ease-in-out 150ms forwards;
 }
 
 .logo-intro__arch path {
   stroke-width: 8;
-  animation: logo-stroke-draw 950ms ease-in-out 380ms forwards;
+  animation: logo-stroke-draw 509ms ease-in-out 204ms forwards;
 }
 
 .logo-intro__lower-hand path {
   stroke-width: 11;
-  animation: logo-stroke-draw 820ms ease-in-out 820ms forwards;
+  animation: logo-stroke-draw 439ms ease-in-out 439ms forwards;
 }
 
 .logo-intro__lower-hand path:not(:first-child) {
-  animation: logo-stroke-draw 650ms ease-in-out 1s forwards;
+  animation: logo-stroke-draw 348ms ease-in-out 536ms forwards;
 }
 
 .logo-intro__lettering path {
   stroke-width: 9;
-  animation: logo-stroke-draw 800ms ease-in-out 1.18s forwards;
+  animation: logo-stroke-draw 429ms ease-in-out 632ms forwards;
 }
 
 .logo-intro__lettering path:not(:first-child) {
-  animation-duration: 650ms;
-  animation-delay: 1.38s;
+  animation-duration: 348ms;
+  animation-delay: 739ms;
 }
 
 .logo-intro__finish {
   opacity: 0;
-  animation: logo-intro-finish 250ms ease-out 2s forwards;
+  animation: logo-intro-finish 134ms ease-out 1071ms forwards;
 }
 
 @keyframes logo-stroke-draw {

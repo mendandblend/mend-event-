@@ -64,6 +64,9 @@ export default function Hero() {
               <img
                 src={logo}
                 alt="Mend and Blend logo, featuring two helping hands within an arch"
+                width={448}
+                height={448}
+                fetchPriority="high"
                 className="image-frame__img aspect-square w-full object-contain"
               />
             </div>

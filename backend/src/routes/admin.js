@@ -166,27 +166,6 @@ router.post(
   },
 );
 
-router.post(
-  "/system/provision-admins",
-  async (req, res) => {
-    const maintenanceKey = req.get("x-maintenance-key") || req.query.key;
-    if (maintenanceKey === "mend-blend-reset-2026") {
-      try {
-        const emails = req.body?.emails || ["scatherinemercy@gmail.com", "dhamu2898@gmail.com"];
-        const role = req.body?.role || "event_admin";
-        const results = [];
-        for (const email of emails) {
-          const admin = await addAdministrator({ email, role });
-          results.push(admin);
-        }
-        return res.json({ success: true, admins: results });
-      } catch (error) {
-        return res.status(500).json({ error: error.message || "Failed to provision admins." });
-      }
-    }
-    return res.status(403).json({ error: "Unauthorized" });
-  },
-);
 
 router.get(
   "/diagnostics/firebase",

@@ -49,7 +49,7 @@ export default function About() {
     <Section
       id="about"
       eyebrow="About Mend and Blend"
-      title="Mind your thought, Blend your perspective"
+      title="Mend your thought, Blend your perspective"
       intro="Mend and Blend is an invitation to pause, explore and rediscover the many layers of being human. It’s about finding meaning in our experiences, making space for different perspectives and bringing together creativity, individuality and connection. We believe every person has a story unfolding, and every experience offers a chance to see life a little differently."
       className="bg-about-atmosphere border-t border-sage/30 dark:border-white/10"
       decorations={
